@@ -147,3 +147,11 @@ const DECOS=[{name:'Legno classico',sign:'#f1dca2',wood:'#5e3d27'},{name:'Neon r
 const empLvlCost=(k,l)=>Math.round(RAR[TOWERS[k].rar].price*.35*l);
 const monLvlCost=(k,l)=>Math.round(RAR[ENEMIES[k].rar].price*.25*l);
 const LVL_MAX=5;
+/* sfida del giorno: stessa per tutti nello stesso giorno */
+function dailyInfo(){const d=new Date(),key=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(),R=rng(key*7+3);
+  const mgr=MANAGER_KEYS[Math.floor(R()*MANAGER_KEYS.length)];const pool=TOWER_KEYS.slice();const deck=[];while(deck.length<6){const k=pool.splice(Math.floor(R()*pool.length),1)[0];deck.push(k)}
+  const curses=CARDS.filter(c=>c.curse&&c.id!=='overbook');const curse=curses[Math.floor(R()*curses.length)];
+  const mesi=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+  return{key,mgr,deck,curse,label:d.getDate()+' '+mesi[d.getMonth()]}}
+const CHEF_LINES=['Chiudete le porte, arrivano!','Coltelli pronti, gente.','Nessuno mangia gratis nel mio locale.','Chi sporca, paga. Con la vita.','Oggi menu degustazione: voi.','Stagista, giù quella padella!','Se muoio, la ricetta del ragù non la saprete mai.','Ricordate: il cliente ha sempre torto.','Ho dormito 12 minuti. Sono carico.'];
+const BOSS_LINES=['Quello lì non ha prenotato.','Fategli assaggiare la specialità della casa.','Stavolta lo serviamo noi.','Tutti al bancone. Adesso.'];

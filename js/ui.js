@@ -4,14 +4,14 @@ const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 const show=(id,on=true)=>{$(id).hidden=!on};
-const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end'];
+const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
 const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
 
 /* ---------- vista ---------- */
 function fit(){const a=$('app').getBoundingClientRect();VW=Math.max(1,a.width);VH=Math.max(1,a.height);DPR=Math.min(2,window.devicePixelRatio||1);
-  const hudH=$('hud').offsetHeight,barH=Math.max(0,$('bar').offsetHeight-14),avail=Math.max(200,VH-hudH-barH);
+  const hudH=$('hud').offsetHeight,barH=Math.max(0,$('bar').offsetHeight-14+($('preview').hidden?32:0)),avail=Math.max(200,VH-hudH-barH);
   SC=Math.min(VW/W,avail/H);OX=(VW-W*SC)/2;OY=hudH+(avail-H*SC)/2;
   V={x0:-OX/SC,y0:-OY/SC,x1:(VW-OX)/SC,y1:(VH-OY)/SC};V.w=V.x1-V.x0;V.h=V.y1-V.y0;
   cv.style.width=VW+'px';cv.style.height=VH+'px';cv.width=Math.ceil(VW*DPR);cv.height=Math.ceil(VH*DPR);
@@ -52,7 +52,7 @@ const shop=$('shop');let shopKey='';
 function renderShop(){const mon=S.kind==='mon';const hand=mon?S.mhand:S.hand;const key=(mon?'m':'d')+hand.join(',');if(key===shopKey)return;shopKey=key;shop.innerHTML='';
   hand.forEach((k,i)=>{const b=document.createElement('button');b.className='emp';b.dataset.i=i;if(!k){b.disabled=true;shop.appendChild(b);return}
     const d=mon?ENEMIES[k]:TOWERS[k];b.innerHTML='<span class="rar" style="background:var('+RAR[d.rar].c+')"></span><img alt="" src="'+(mon?ICONS.e[k]:ICONS.t[k])+'"><span class="nm">'+(mon?d.name.split(' ')[0]+(d.group?' x3':''):d.name)+'</span><span class="cs"></span>';
-    b.onclick=()=>{if(mon){playMon(i);return}sfx('click');closePanel();S.tool=S.tool===k?null:k;if(S.tool)toast(d.full+': tocca una piazzola libera')};shop.appendChild(b)})}
+    b.onclick=()=>{if(mon){const ok=S.hunger>=monCost(k);playMon(i);if(ok)toast(d.name+': '+d.info);return}sfx('click');closePanel();S.tool=S.tool===k?null:k};shop.appendChild(b)})}
 const cache={};function setT(id,v){if(cache[id]!==v){cache[id]=v;$(id).textContent=v}}
 function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderShop();
   if(mon){setT('hpLbl',String(Math.max(0,Math.ceil(S.baseHp))));$('perlePill').hidden=true;const m=Math.max(0,Math.ceil(S.timer));setT('waveLbl','Round '+(S.fi+1)+'/3 · '+Math.floor(m/60)+':'+String(m%60).padStart(2,'0'));
@@ -68,7 +68,20 @@ function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderS
     setT('abilityLbl',S.mgr==='polpo'?String(S.traps):mgrShort[S.mgr]);
     $('wasabiBtn').hidden=S.wasabi<=0;setT('wasabiCnt',String(S.wasabi));$('freezeBtn').hidden=S.freeze<=0;setT('freezeCnt',String(S.freeze));
     $('startBtn').hidden=S.mode!=='build';setT('startBtn',boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
-  setT('speedBtn','x'+S.speed)}
+  syncToolInfo();syncPreview();setT('speedBtn','x'+S.speed)}
+function statLine(k){const d=TOWERS[k],meta=1+.1*((save.emp[k]||1)-1),dm=d.dmg*(S&&S.kind==='def'?S.mods.dmg[k]*S.mods.all:1)*meta,rg=Math.round(d.range*(S&&S.kind==='def'?S.mods.range:1));
+  switch(d.kind){case'light':return'Raggio di luce '+rg+' · i nemici illuminati prendono +15% danni';case'buff':return'Raggio '+rg+' · +30% velocità d\'attacco ai vicini';
+    case'heal':return'Raggio '+rg+' · toglie blocchi e nausea ogni '+d.rate+'s, poi protegge';case'bank':return'+30 perle a fine ondata (+12 per livello)';
+    case'swarm':return'Danno '+fmt(dm)+' ogni '+d.rate+'s · gittata '+rg;case'gulp':return'Danno '+Math.round(dm)+' a tutti davanti · ogni '+d.rate+'s · gittata '+rg;
+    case'patrol':return'Danno '+fmt(dm)+' a chi tocca · gira attorno alla piazzola';case'ink':return'Nube per 3s: i nemici tornano indietro · gittata '+rg;
+    default:return'Danno '+fmt(dm)+' · gittata '+rg+' · 1 colpo ogni '+d.rate+'s'}}
+let tiKey='';function syncToolInfo(){const el=$('toolInfo');const k=S.kind==='def'&&(S.mode==='build'||S.mode==='wave')?S.tool:null;const key=k?k+S.perle+':'+S.traps:'';if(key===tiKey)return;tiKey=key;if(!k){el.hidden=true;return}
+  if(k==='trap'){el.style.setProperty('--rc','var(--pearl)');el.innerHTML='<img alt="" src="'+ICONS.plate+'"><div class="ti"><div class="tt"><span class="tn">Piatto trappola</span></div><span class="tinfo">Il primo nemico che ci passa sopra si ferma a mangiare e prende 45 danni. Chi vola ci passa sopra.</span><span class="thint">Tocca il sentiero per servirlo · tocca di nuovo il pulsante per annullare</span></div><span class="tcost">'+S.traps+'</span>';el.hidden=false;return}
+  toastEl.classList.remove('on');
+  const d=TOWERS[k],c=hireCost(k);el.style.setProperty('--rc','var('+RAR[d.rar].c+')');
+  el.innerHTML='<img alt="" src="'+ICONS.t[k]+'"><div class="ti"><div class="tt"><span class="tn">'+d.full+'</span><span class="chip" style="background:var('+RAR[d.rar].c+')">'+RAR[d.rar].n+'</span></div><span class="tinfo">'+d.info+'</span><span class="tstat">'+statLine(k)+'</span><span class="tjoke">'+d.joke+'</span><span class="thint">'+(S.perle>=c?'Tocca una piazzola che brilla per assumerlo':'Ti mancano '+(c-S.perle)+' perle')+' · tocca di nuovo la carta per annullare</span></div><span class="tcost"><span class="pearl"></span>'+c+'</span>';el.hidden=false}
+let pvKey='';function syncPreview(){const el=$('preview');const q=S.kind==='def'&&S.mode==='build'&&!S.tool?S.nextQ:null;const key=q?q.length+':'+q.map(x=>x[0][0]).join(''):'';if(key===pvKey)return;pvKey=key;if(!q){el.hidden=true;return}
+  const cnt={};for(const[t]of q)cnt[t]=(cnt[t]||0)+1;el.innerHTML='<span>In arrivo:</span>'+Object.keys(cnt).map(t=>'<span class="pc'+(ENEMIES[t].boss?' boss':'')+'" title="'+ENEMIES[t].name+'"><img alt="" src="'+ICONS.e[t]+'">'+(ENEMIES[t].boss?'BOSS':'x'+cnt[t])+'</span>').join('');el.hidden=false}
 $('abilityBtn').onclick=()=>{if(!S||S.kind!=='def')return;if(S.mgr!=='polpo'){toast(MANAGERS[S.mgr].name+': '+MANAGERS[S.mgr].info);return}sfx('click');if(S.traps<=0){toast('Piatti trappola finiti');return}closePanel();S.tool=S.tool==='trap'?null:'trap';if(S.tool)toast('Tocca il sentiero per servire un piatto trappola')};
 $('wasabiBtn').onclick=()=>{if(S.mode!=='wave'||S.wasabi<=0){toast('Usala quando arrivano i nemici');return}S.wasabi--;sfx('boom');S.shake=.4;fx({k:'flash',dur:.5});for(const e of[...S.enemies])hurt(e,60,{boom:1});toast('WASABI INDUSTRIALE!')};
 $('freezeBtn').onclick=()=>{if(S.mode!=='wave'||S.freeze<=0){toast('Usalo quando arrivano i nemici');return}S.freeze--;S.freezeT=4;sfx('zap');fx({k:'flash',dur:.5,col:'#bfe9ff'});toast('Cervelli congelati per 4 secondi')};
@@ -100,7 +113,7 @@ function floorIntro(){closePanel();const F=WORLD.floor,mon=S.kind==='mon';
   if(mon){$('floorBossImg').src=ICONS.m.polpo;$('floorBossLbl').textContent='Difende il bancone';$('floorBoss').textContent='Il Polpo Chef';$('floorBossInfo').textContent='Budget iniziale '+Math.round(S.ai.budget)+' perle, cresce di '+Math.round(S.ai.income)+' al secondo.'}
   else{const b=ENEMIES[F.boss];$('floorBossImg').src=ICONS.e[F.boss];$('floorBossLbl').textContent='Boss del piano';$('floorBoss').textContent=b.name+' · '+b.title;$('floorBossInfo').textContent=b.info}
   $('floorGo').textContent=mon?'All\'attacco':'Scendi';show('floorOv')}
-$('floorGo').onclick=()=>{sfx('click');show('floorOv',false);if(S.kind==='mon'){S.mode='mplay';toast('Tocca un mostro in basso per mandarlo all\'attacco')}else{S.mode='build';toast('Tocca una piazzola per assumere un dipendente')}};
+$('floorGo').onclick=()=>{sfx('click');show('floorOv',false);if(S.kind==='mon'){S.mode='mplay';toast('Tocca un mostro in basso per mandarlo all\'attacco')}else{S.mode='build';prepWave();toast('Tocca un dipendente in basso per vedere cosa fa')}};
 function foundHTML(list){return list.map(f=>{if(f.startsWith('mgr:')){const k=f.slice(4);return'<span><img alt="" src="'+ICONS.m[k]+'">'+MANAGERS[k].name+'</span>'}
   if(TOWERS[f])return'<span><img alt="" src="'+ICONS.t[f]+'">'+TOWERS[f].full+'</span>';return'<span><img alt="" src="'+ICONS.e[f]+'">'+ENEMIES[f].name+'</span>'}).join('')}
 function showEnd(win,earned){closePanel();hideAll();const mon=S.kind==='mon';
@@ -110,15 +123,27 @@ function showEnd(win,earned){closePanel();hideAll();const mon=S.kind==='mon';
     $('endTitle').textContent=win?'Il bistrot è salvo!':'Ti hanno mangiato il bancone';
     $('endText').textContent=win?'Il Megalodonte se ne va con il conto pagato. Il Polpo Chef non dorme da una settimana.':'Il Polpo Chef raccoglie i pezzi del bancone. Domani riapre, con altre carte e altro personale.'}
   $('endStats').innerHTML='<div><b>+'+earned+'</b>perle</div><div><b>'+save.perle+'</b>perle totali</div>'+(mon?'':'<div><b>+'+S.stars+'</b>stelle</div>');
+  if(S.dailyWon)$('endText').textContent+=' Sfida del giorno vinta: perle doppie e 3 stelle!';
   $('endFound').innerHTML=S.found.length?foundHTML(S.found):'';show('end')}
 const ui={floorIntro,showCards,showEnd,nearSlot};
 
 /* ---------- menu e preparazione ---------- */
 let pending=null;
 function idleScene(){S=newRun('def','short',{});S.mode='menu';loadFloor(Math.floor(Math.random()*6));S.lights=[]}
+const MODES=[{id:'short',name:'Run corta',desc:'3 piani: uno facile, uno difficile, poi l\'Abisso. 3 ondate e un boss per piano.',icon:()=>ICONS.e.reAragosta,rec:()=>save.best.short?'Record: '+save.best.short+'/3 piani':'Mai completata'},
+  {id:'long',name:'Run lunga',desc:'Tutti e 6 i piani fino al Megalodonte. 5 ondate per piano.',icon:()=>ICONS.e.megalodonte,rec:()=>save.best.long?'Record: '+save.best.long+'/6 piani':'Mai completata'},
+  {id:'inf',name:'Infinita',desc:'Ondate senza fine, un boss ogni 5. I piani girano.',icon:()=>ICONS.t.balena,rec:()=>save.best.inf?'Record: '+save.best.inf+' ondate':'Nessun record'},
+  {id:'monster',name:'Mostro affamato',desc:'Ruoli invertiti: guidi tu i mostri contro la cucina.',icon:()=>ICONS.e.kraken,rec:()=>save.best.monster?'Record: '+save.best.monster+'/3 round':'Nessun record'}];
 function showMenu(){musicMode=0;pausedAudio=false;applyVol();closePanel();hideAll();idleScene();shopKey='';
-  const bs=save.best;$('menuStats').innerHTML='<div><b>'+save.perle+'</b>perle</div><div><b>'+save.stars+'</b>stelle</div><div><b>'+(bs.short?bs.short+'/3':'—')+'</b>corta</div><div><b>'+(bs.long?bs.long+'/6':'—')+'</b>lunga</div><div><b>'+(bs.inf||'—')+'</b>infinita</div>';show('menu')}
-document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;if(m==='monster')openMSetup();else openSetup(m)});
+  $('mPerle').textContent=save.perle;$('mStars').textContent=save.stars;
+  const seen=MONSTER_KEYS.filter(k=>save.seen[k]).length;
+  $('menuStats').innerHTML='<div><b>'+save.runs+'</b>run giocate</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+Object.keys(save.emp).length+'/'+TOWER_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
+  const dy=dailyInfo(),done=save.dailyDone===dy.key;
+  $('dailyBtn').innerHTML='<span class="dTag">Sfida del giorno · '+dy.label+'</span><span class="dName">'+MANAGERS[dy.mgr].name+' + '+dy.curse.name+'</span><span class="dRule">Run corta con gestore e mazzo fissi, uguali per tutti. Maledizione già attiva: '+dy.curse.eff(newRun('def','short',{}))+'</span><span class="dDeck">'+dy.deck.map(k=>'<img alt="" title="'+TOWERS[k].full+'" src="'+ICONS.t[k]+'">').join('')+'</span><span class="dRew">'+(done?'Completata oggi. Domani ne arriva una nuova.':'Premio alla vittoria: perle x2 e 3 stelle')+'</span>'+(done?'<span class="dDone">Fatta</span>':'');
+  $('modeList').innerHTML=MODES.map(m=>'<button class="mode" data-mode="'+m.id+'"><img alt="" src="'+m.icon()+'"><span class="mb"><span class="mn">'+m.name+'</span><span class="md">'+m.desc+'</span><span class="rec">'+m.rec()+'</span></span></button>').join('');
+  $('modeList').querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;if(m==='monster')openMSetup();else openSetup(m)});
+  $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;show('menu')}
+$('dailyBtn').onclick=()=>{sfx('click');const dy=dailyInfo();hideAll();shopKey='';startDefense('short',dy.mgr,dy.deck,dy);toast('Sfida del giorno: '+dy.curse.name)};
 const MODE_NAMES={short:'Run corta',long:'Run lunga',inf:'Infinita'};
 function ownedEmp(){return TOWER_KEYS.filter(k=>save.emp[k])}
 function openSetup(mode){pending={mode,mgr:save.mgr[save.mgrSel]?save.mgrSel:'polpo',deck:(save.deck||[]).filter(k=>save.emp[k])};
@@ -178,13 +203,38 @@ $('hubList').addEventListener('click',ev=>{const b=ev.target.closest('button[dat
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{sfx('click');hubTab=b.dataset.tab;renderHub()});
 $('hubBtn').onclick=()=>{sfx('click');openHub('emp')};$('hubBack').onclick=()=>{sfx('click');showMenu()};
 
+/* ---------- bestiario ---------- */
+let codexTab='emp';const CODEX_HINT={emp:'Tutti i 17 dipendenti. Quelli bloccati si comprano nel Bistrot o si trovano nelle carte.',en:'I nemici che non hai ancora incontrato restano in ombra.',boss:'Un boss per piano. Battuto, diventa un mostro leggendario per Mostro affamato.',mgr:'Il gestore cambia le regole della run.'};
+function openCodex(){hideAll();renderCodex();show('codex')}
+function renderCodex(){document.querySelectorAll('.ctab').forEach(b=>b.classList.toggle('on',b.dataset.tab===codexTab));$('codexHint').textContent=CODEX_HINT[codexTab];let h='';
+  const chip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
+  if(codexTab==='emp')for(const k of TOWER_KEYS){const d=TOWERS[k];h+='<div class="cc"><img alt="" src="'+ICONS.t[k]+'"><span class="nm">'+d.full+'</span>'+chip(d.rar)+'<span class="md">'+d.info+'</span><span class="st">'+d.cost+' perle · '+statLine(k)+'</span><span class="jk">'+d.joke+(save.emp[k]?'':' · Bloccato')+'</span></div>'}
+  else if(codexTab==='mgr')for(const k of MANAGER_KEYS){const m=MANAGERS[k];h+='<div class="cc'+(save.mgr[k]?'':' unk')+'"><img alt="" src="'+ICONS.m[k]+'"><span class="nm">'+m.name+'</span>'+chip(m.rar)+'<span class="md">'+m.info+'</span><span class="jk">'+(save.mgr[k]?'Sbloccato':m.unlock.type==='buy'?'Si compra: '+m.unlock.price+' perle':m.unlock.text)+'</span></div>'}
+  else{const keys=MONSTER_KEYS.filter(k=>codexTab==='boss'?ENEMIES[k].boss:!ENEMIES[k].boss);for(const k of keys){const d=ENEMIES[k],known=save.seen[k]||save.bossBeat[k];
+    const fl=d.boss?FLOORS.find(f=>f.boss===k):null;h+='<div class="cc'+(known?'':' unk')+'"><img alt="" src="'+ICONS.e[k]+'"><span class="nm">'+(known?d.name:'???')+'</span>'+chip(d.rar)+'<span class="md">'+(known?d.info:'Incontralo in una run per scoprirlo')+'</span>'+(known?'<span class="st">Vita '+d.hp+' · velocità '+d.speed+' · '+d.dmg+' danni al bancone</span>':'')+(fl?'<span class="jk">Boss di: '+fl.name+(save.bossBeat[k]?' · Battuto':'')+'</span>':'')+'</div>'}}
+  $('codexList').innerHTML=h}
+document.querySelectorAll('.ctab').forEach(b=>b.onclick=()=>{sfx('click');codexTab=b.dataset.tab;renderCodex()});
+$('codexBtn').onclick=()=>{sfx('click');openCodex()};$('codexBack').onclick=()=>{sfx('click');showMenu()};
+const HOW=[['t:granchio','Assumi','Tocca un dipendente in basso: vedi cosa fa, quanto fa male e quanto costa. Poi tocca una piazzola che brilla.'],
+  ['e:ghiozzo','Guarda chi arriva','Sopra la mano c\'è l\'anteprima dell\'ondata. Poi premi Inizia ondata.'],
+  ['t:squalo','Potenzia o licenzia','Tocca un dipendente già piazzato: sale fino al livello 3, oppure lo licenzi e ti riprendi il 60%.'],
+  ['m:polpo','Usa il gestore','Il Polpo Chef serve piatti trappola sul sentiero. Gli altri gestori hanno poteri automatici.'],
+  ['t:balena','Scegli una carta','Dopo ogni ondata: potenziamenti, maledizioni (forti ma con un prezzo), piatti speciali o dipendenti nuovi.'],
+  ['e:reAragosta','Batti il boss e scendi','Ogni piano finisce con un boss. Scendendo, tutto il personale viene rimborsato.'],
+  ['t:rana','Porta la luce','Nella Fossa buia e nell\'Abisso i dipendenti vedono solo vicino a sé o nella luce della Rana faro.'],
+  ['m:pagliaccio','Cresci nel Bistrot','Perle e stelle restano: sblocca personale, alza i livelli e migliora il ristorante.']];
+function openHow(){hideAll();const ic=x=>{const[t,k]=x.split(':');return t==='t'?ICONS.t[k]:t==='e'?ICONS.e[k]:ICONS.m[k]};
+  $('howSteps').innerHTML=HOW.map(([i,t,d])=>'<li><img alt="" src="'+ic(i)+'"><div><b>'+t+'</b><span>'+d+'</span></div></li>').join('');
+  $('howFloors').innerHTML=FLOORS.map((f,i)=>itemRow(ICONS.e[f.boss],(i+1)+'. '+f.name,null,f.rule+' Boss: '+ENEMIES[f.boss].name+'.','',false)).join('');show('howto')}
+$('howBtn').onclick=()=>{sfx('click');openHow()};$('howBack').onclick=()=>{sfx('click');showMenu()};
+
 /* ---------- pausa, impostazioni, salvataggio ---------- */
 let pauseFromMenu=false;
 function openPause(fromMenu){pauseFromMenu=fromMenu;if(!fromMenu){if(!S||!['build','wave','mplay'].includes(S.mode))return;S.prev=S.mode;S.mode='pause';closePanel()}
   $('pauseTitle').textContent=fromMenu?'Impostazioni':'Pausa';$('pauseRun').hidden=fromMenu;$('resumeBtn').textContent=fromMenu?'Chiudi':'Riprendi';$('saveMsg').textContent='';
   if(fromMenu)hideAll();show('pause');pausedAudio=!fromMenu;applyVol()}
 $('pauseBtn').onclick=()=>{sfx('click');openPause(false)};
-$('settingsBtn').onclick=()=>{sfx('click');openPause(true)};
+$('settingsBtn').onclick=$('settings2Btn').onclick=()=>{sfx('click');openPause(true)};
 $('resumeBtn').onclick=()=>{sfx('click');show('pause',false);pausedAudio=false;applyVol();if(pauseFromMenu)showMenu();else S.mode=S.prev||'build'};
 $('restartBtn').onclick=()=>{sfx('click');quitRun();restartSame()};
 $('quitBtn').onclick=()=>{sfx('click');quitRun();showMenu()};
@@ -208,8 +258,15 @@ $('saveCode').addEventListener('input',()=>saveMsg(''));
 
 /* ---------- avvio e ciclo ---------- */
 const ma=$('menuArt').getContext('2d');
-function drawMenuArt(){ma.setTransform(1,0,0,1,0,0);ma.clearRect(0,0,340,260);ma.setTransform(2,0,0,2,0,0);drawMegaMenu();}
-function drawMegaMenu(){drawOcto(ma,85,78,1.55,T);drawShark(ma,140,96,.9,-1,T,0);drawCrab(ma,30,100,.85,1,T);drawJelly(ma,150,40,.75,T)}
+function drawMenuArt(){ma.setTransform(1,0,0,1,0,0);ma.clearRect(0,0,680,300);ma.setTransform(2,0,0,2,0,0);drawMegaMenu()}
+function drawMegaMenu(){const c=ma;
+  glowAt(c,170,90,120,'rgba(255,170,80,A)',.18);
+  drawLobster(c,300,70+Math.sin(T*1.2)*3,1.05,T);drawEel(c,34,40+Math.sin(T*2)*4,1.3,1,T);
+  drawOcto(c,170,78,1.6,T);
+  c.beginPath();c.roundRect(96,112,148,30,6);FS(c,'#5e3d27',2.2);c.beginPath();c.roundRect(90,105,160,12,5);FS(c,'#8f5f3d',2.2);for(let k=0;k<5;k++)drawNigiri(c,118+k*26,102,1);
+  c.font='16px Bangers,Impact,sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle=INK;c.strokeText('SUSHI BAR',170,134);c.fillStyle='#f1dca2';c.fillText('SUSHI BAR',170,134);
+  drawCrab(c,62,118,1,1,T);drawShark(c,272,124,1,-1,T,Math.max(0,Math.sin(T*2.2))*.6);drawJelly(c,112,34+Math.sin(T*1.5)*4,.8,T);drawPuffer(c,232,30,.8,T,Math.max(0,Math.sin(T*1.7)));
+  for(let k=0;k<8;k++){const b=((T*20+k*23)%150);E(c,20+k*42+Math.sin(T+k)*4,150-b,1.5+k%3,1.5+k%3);c.strokeStyle='rgba(220,250,255,.5)';c.lineWidth=1;c.stroke()}}
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
   if(S){if(S.mode!=='pause')update(dt*((S.mode==='wave'||S.mode==='mplay')?S.speed:1));render();syncUI()}
@@ -219,7 +276,7 @@ ICONS.resto={hp:icon(c=>{c.beginPath();c.roundRect(6,22,36,14,4);FS(c,'#5e3d27',
   cash:icon(c=>{for(let k=0;k<6;k++){E(c,12+k*5,34-k*3,6,6);FS(c,'#f1dca2',1.4)}}),cards:icon(c=>{for(let k=0;k<3;k++){c.save();c.translate(24,26);c.rotate((k-1)*.3);c.beginPath();c.roundRect(-9,-13,18,26,3);FS(c,['#46aee8','#ff7a59','#f2c94c'][k],1.8);c.restore()}}),
   deco:icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,'#3a2a3e',2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle='#ff6ad5';c.fillText('SUSHI',24,28)})};
 ICONS.deco=DECOS.map(dc=>icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,dc.wood,2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle=dc.sign;c.fillText('SUSHI',24,28)}));
-$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
+$('tileHub').src=ICONS.m.polpo;$('tileCodex').src=ICONS.e.granchioReale;$('tileHow').src=ICONS.t.cavalluccio;$('tileSet').src=ICONS.t.lanterna;$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
 window.abyssView=()=>({OX,OY,SC});window.abyssState=()=>S;
 window.abyssIcon=(n,pad)=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const g=x.createRadialGradient(n/2,n*.42,n*.05,n/2,n/2,n*.7);g.addColorStop(0,'#2f6a62');g.addColorStop(1,'#0b1a1c');x.fillStyle=g;x.fillRect(0,0,n,n);const k=n/100*(pad?.78:.9);x.translate(n/2,n/2+n*.06);x.scale(k,k);drawOcto(x,0,0,1.55,.6);return c.toDataURL('image/png')};
 try{if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude\.ai|claudeusercontent/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}

@@ -30,15 +30,22 @@ const THEMES={
 const WORLD={fi:0,floor:null,theme:null,paths:[],slots:[],vents:[],kelp:[],decor:[],kelpPlants:[],glows:[],bg:document.createElement('canvas')};
 function distToPaths(x,y){let m=1e9;for(const p of WORLD.paths)m=Math.min(m,p.dist(x,y));return m}
 
-function genSlots(){const out=[],samples=[];
+function slotOK(x,y){if(x<20||x>340||y<30||y>456)return false;
+  for(let k=0;k<12;k++){const a=k/12*TAU;if(distToPaths(x+Math.cos(a)*19,y+Math.sin(a)*9)<22)return false}
+  
+  if(Math.hypot(x-180,y-490)<72)return false;if(WORLD.vents.some(v=>Math.hypot(v[0]-x,v[1]-y)<40))return false;
+  if(WORLD.kelp.some(k=>Math.hypot(k[0]-x,k[1]-y)<k[2]+16))return false;
+  for(const p of WORLD.paths){const s=p.pts[0];if(Math.hypot(x-s[0],y-s[1])<54)return false}return true}
+/* piazzole in fila lungo il sentiero: passo regolare, centrate nei corridoi stretti */
+function genSlots(){const cand=[],samples=[];
   for(const p of WORLD.paths)for(let d=0;d<p.len;d+=10){const q=p.at(d);if(q.x>0&&q.x<W&&q.y>0&&q.y<H)samples.push(q)}
-  const cand=[];for(let y=30;y<=458;y+=7)for(let x=22;x<=338;x+=7){const d=distToPaths(x,y);if(d<31||d>56)continue;
-    if(Math.hypot(x-180,y-490)<66)continue;if(WORLD.vents.some(v=>Math.hypot(v[0]-x,v[1]-y)<34))continue;if(WORLD.kelp.some(k=>Math.hypot(k[0]-x,k[1]-y)<k[2]+10))continue;
-    let n=0;for(const q of samples)if(Math.hypot(q.x-x,q.y-y)<95)n++;cand.push({x,y,n:n+hash2(x,y)*2-Math.abs(d-40)*.15})}
-  cand.sort((a,b)=>b.n-a.n);
+  for(const p of WORLD.paths)for(const sg of p.segs){if(sg.len<40)continue;const nx=-sg.dy,ny=sg.dx;
+    for(let d=22;d<=sg.len-16;d+=23)for(const side of[-1,1]){const bx=sg.ax+sg.dx*d,by=sg.ay+sg.dy*d;
+      for(let t=28;t<=48;t+=2){const x=Math.round(bx+nx*side*t),y=Math.round(by+ny*side*t);if(slotOK(x,y)){cand.push({x,y,t});break}}}}
+  for(const c of cand){let n=0;for(const q of samples)if(Math.hypot(q.x-c.x,q.y-c.y)<95)n++;c.n=n+hash2(c.x,c.y)-c.t*.15}
+  cand.sort((a,b)=>b.n-a.n);const out=[];
   for(const c of cand){if(out.length>=18)break;if(out.every(o=>Math.hypot(o.x-c.x,o.y-c.y)>=46))out.push({x:c.x,y:c.y,tower:null})}
-  return out}
-
+  out.sort((a,b)=>a.y-b.y||a.x-b.x);return out}
 function freeAt(x,y,r){if(distToPaths(x,y)<r+22)return false;for(const s of WORLD.slots)if(Math.hypot(s.x-x,s.y-y)<r+20)return false;
   if(Math.hypot(x-180,y-500)<r+85)return false;for(const p of WORLD.paths){const s=p.pts[0];if(Math.hypot(x-s[0],y-s[1])<r+60)return false}
   for(const v of WORLD.vents)if(Math.hypot(x-v[0],y-v[1])<r+30)return false;

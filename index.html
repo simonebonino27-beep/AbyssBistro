@@ -29,10 +29,12 @@
     <button class="hbtn" id="speedBtn" aria-label="Velocità di gioco">x1</button>
     <button class="hbtn" id="pauseBtn" aria-label="Pausa"><span class="bars"></span><span class="bars"></span></button>
   </div>
+  <div id="toolInfo" hidden></div>
   <div id="toast" role="status"></div>
   <div id="panel" hidden></div>
   <div id="bar" class="gut"><div id="barIn">
     <div id="hungerWrap" hidden><span class="fang" aria-hidden="true"></span><div id="hungerBar"><div id="hungerFill"></div></div><span id="hungerLbl">0/100</span></div>
+    <div id="preview" hidden></div>
     <div id="shop"></div>
     <div id="actions">
       <button class="act" id="abilityBtn"><img alt="" id="abilityIco"><span id="abilityLbl">Trappole</span></button>
@@ -44,18 +46,22 @@
   </div></div>
 
   <div class="overlay" id="menu">
-    <div class="sheet">
-      <canvas id="menuArt" width="340" height="260" aria-hidden="true"></canvas>
+    <div class="sheet wide menuSheet">
+      <div class="mTop"><div class="wallet sm"><span><span class="pearl"></span><b id="mPerle">0</b></span><span><span class="starI"></span><b id="mStars">0</b></span></div><button class="ghost slim" id="settingsBtn">Impostazioni</button></div>
+      <canvas id="menuArt" width="680" height="300" aria-hidden="true"></canvas>
       <h1>Abyss Bistro</h1>
-      <p class="lead">Un sushi bar in fondo all'oceano. Clienti mostruosi. Personale instabile.</p>
-      <div class="modes">
-        <button class="mode" data-mode="short"><span class="mn">Run corta</span><span class="md">3 piani a caso, l'ultimo è l'Abisso. 3 ondate e un boss per piano.</span><span class="tag">10-15 min</span></button>
-        <button class="mode" data-mode="long"><span class="mn">Run lunga</span><span class="md">Tutti e 6 i piani fino al Megalodonte. 5 ondate e un boss per piano.</span><span class="tag">25-30 min</span></button>
-        <button class="mode" data-mode="inf"><span class="mn">Infinita</span><span class="md">Ondate senza fine, un boss ogni 5. Quanto resisti?</span><span class="tag">Record</span></button>
-        <button class="mode" data-mode="monster"><span class="mn">Mostro affamato</span><span class="md">Ruoli invertiti: guida i mostri e mangiati il bistrot.</span><span class="tag">3 round</span></button>
+      <p class="tagline">Tower defense roguelike · Il sushi più pericoloso degli abissi</p>
+      <div class="profile" id="menuStats"></div>
+      <button class="daily" id="dailyBtn"></button>
+      <div class="sectT">Modalità</div>
+      <div class="modes" id="modeList"></div>
+      <div class="tiles">
+        <button class="tile" id="hubBtn"><img alt="" id="tileHub"><span class="tn">Il Bistrot</span><span class="td">Sblocchi, livelli e ristorante</span></button>
+        <button class="tile" id="codexBtn"><img alt="" id="tileCodex"><span class="tn">Bestiario</span><span class="td" id="codexCount">Tutti i personaggi</span></button>
+        <button class="tile" id="howBtn"><img alt="" id="tileHow"><span class="tn">Come si gioca</span><span class="td">Regole, piani e trucchi</span></button>
+        <button class="tile" id="settings2Btn"><img alt="" id="tileSet"><span class="tn">Impostazioni</span><span class="td">Volume e salvataggi</span></button>
       </div>
-      <div class="stats" id="menuStats"></div>
-      <div class="rowbtns"><button class="ghost" id="hubBtn">Il Bistrot</button><button class="ghost" id="settingsBtn">Impostazioni</button></div>
+      <p class="credits">Un gioco di Simone e Nordin · v5</p>
     </div>
   </div>
 
@@ -131,6 +137,26 @@
       <p class="lead" id="floorRule"></p>
       <div class="bossRow"><img alt="" id="floorBossImg"><div class="grow"><div class="eyebrow" id="floorBossLbl">Boss del piano</div><div class="sect" id="floorBoss" style="margin:0"></div><div class="lead" id="floorBossInfo" style="font-size:13px"></div></div></div>
       <button class="big" id="floorGo">Scendi</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="codex" hidden>
+    <div class="sheet wide">
+      <h2>Bestiario</h2>
+      <div class="tabs" role="tablist"><button class="ctab on" data-tab="emp">Dipendenti</button><button class="ctab" data-tab="en">Nemici</button><button class="ctab" data-tab="boss">Boss</button><button class="ctab" data-tab="mgr">Gestori</button></div>
+      <p class="hint" id="codexHint"></p>
+      <div class="cgrid" id="codexList"></div>
+      <button class="big" id="codexBack">Torna al menu</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="howto" hidden>
+    <div class="sheet wide">
+      <h2>Come si gioca</h2>
+      <ol class="steps" id="howSteps"></ol>
+      <div class="sectT">I piani</div>
+      <div class="list" id="howFloors"></div>
+      <button class="big" id="howBack">Ho capito</button>
     </div>
   </div>
 
