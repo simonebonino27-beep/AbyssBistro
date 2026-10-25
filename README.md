@@ -25,6 +25,11 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 - **Perle**: comprano dipendenti, gestori e mostri, e ne alzano il livello (fino al 5).
 - **Stelle Michelin**: 1 per boss battuto, 2 se il bancone non ha preso danni in quel piano. Migliorano il ristorante: vita del bancone, perle iniziali, carte migliori, insegne.
 
+### Tutorial
+- Alla prima apertura il gioco chiede se conosci già i tower defense: se rispondi no, il Polpo Chef ti guida passo per passo nella tua prima run vera.
+- La prima volta che apri Run lunga, Infinita, Mostro affamato o la Sfida del giorno compare una scheda che spiega la modalità.
+- Il tutorial si può rifare da Come si gioca.
+
 ### Altro
 - Pausa, volume separato di musica ed effetti, velocità x2.
 - Salvataggio automatico sul dispositivo + codice di backup per spostarlo su un altro.

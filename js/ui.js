@@ -4,7 +4,7 @@ const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 const show=(id,on=true)=>{$(id).hidden=!on};
-const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto'];
+const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto','askOv','modeIntro'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
 const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
@@ -113,7 +113,7 @@ function floorIntro(){closePanel();const F=WORLD.floor,mon=S.kind==='mon';
   if(mon){$('floorBossImg').src=ICONS.m.polpo;$('floorBossLbl').textContent='Difende il bancone';$('floorBoss').textContent='Il Polpo Chef';$('floorBossInfo').textContent='Budget iniziale '+Math.round(S.ai.budget)+' perle, cresce di '+Math.round(S.ai.income)+' al secondo.'}
   else{const b=ENEMIES[F.boss];$('floorBossImg').src=ICONS.e[F.boss];$('floorBossLbl').textContent='Boss del piano';$('floorBoss').textContent=b.name+' · '+b.title;$('floorBossInfo').textContent=b.info}
   $('floorGo').textContent=mon?'All\'attacco':'Scendi';show('floorOv')}
-$('floorGo').onclick=()=>{sfx('click');show('floorOv',false);if(S.kind==='mon'){S.mode='mplay';toast('Tocca un mostro in basso per mandarlo all\'attacco')}else{S.mode='build';prepWave();toast('Tocca un dipendente in basso per vedere cosa fa')}};
+$('floorGo').onclick=()=>{sfx('click');show('floorOv',false);if(S.kind==='mon'){S.mode='mplay';toast('Tocca un mostro in basso per mandarlo all\'attacco')}else{S.mode='build';prepWave();if(S.tutorial&&tutStep<0)nextStep();else toast('Tocca un dipendente in basso per vedere cosa fa')}};
 function foundHTML(list){return list.map(f=>{if(f.startsWith('mgr:')){const k=f.slice(4);return'<span><img alt="" src="'+ICONS.m[k]+'">'+MANAGERS[k].name+'</span>'}
   if(TOWERS[f])return'<span><img alt="" src="'+ICONS.t[f]+'">'+TOWERS[f].full+'</span>';return'<span><img alt="" src="'+ICONS.e[f]+'">'+ENEMIES[f].name+'</span>'}).join('')}
 function showEnd(win,earned){closePanel();hideAll();const mon=S.kind==='mon';
@@ -141,9 +141,9 @@ function showMenu(){musicMode=0;pausedAudio=false;applyVol();closePanel();hideAl
   const dy=dailyInfo(),done=save.dailyDone===dy.key;
   $('dailyBtn').innerHTML='<span class="dTag">Sfida del giorno · '+dy.label+'</span><span class="dName">'+MANAGERS[dy.mgr].name+' + '+dy.curse.name+'</span><span class="dRule">Run corta con gestore e mazzo fissi, uguali per tutti. Maledizione già attiva: '+dy.curse.eff(newRun('def','short',{}))+'</span><span class="dDeck">'+dy.deck.map(k=>'<img alt="" title="'+TOWERS[k].full+'" src="'+ICONS.t[k]+'">').join('')+'</span><span class="dRew">'+(done?'Completata oggi. Domani ne arriva una nuova.':'Premio alla vittoria: perle x2 e 3 stelle')+'</span>'+(done?'<span class="dDone">Fatta</span>':'');
   $('modeList').innerHTML=MODES.map(m=>'<button class="mode" data-mode="'+m.id+'"><img alt="" src="'+m.icon()+'"><span class="mb"><span class="mn">'+m.name+'</span><span class="md">'+m.desc+'</span><span class="rec">'+m.rec()+'</span></span></button>').join('');
-  $('modeList').querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;if(m==='monster')openMSetup();else openSetup(m)});
-  $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;show('menu')}
-$('dailyBtn').onclick=()=>{sfx('click');const dy=dailyInfo();hideAll();shopKey='';startDefense('short',dy.mgr,dy.deck,dy);toast('Sfida del giorno: '+dy.curse.name)};
+  $('modeList').querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;withIntro(m,()=>{if(m==='monster')openMSetup();else if(m==='short'&&!save.tutDone&&save.novice)startTutorial();else openSetup(m)})});
+  $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;show('menu');if(typeof maybeAsk==='function')maybeAsk()}
+$('dailyBtn').onclick=()=>{sfx('click');withIntro('daily',()=>{const dy=dailyInfo();hideAll();shopKey='';startDefense('short',dy.mgr,dy.deck,dy);toast('Sfida del giorno: '+dy.curse.name)})};
 const MODE_NAMES={short:'Run corta',long:'Run lunga',inf:'Infinita'};
 function ownedEmp(){return TOWER_KEYS.filter(k=>save.emp[k])}
 function openSetup(mode){pending={mode,mgr:save.mgr[save.mgrSel]?save.mgrSel:'polpo',deck:(save.deck||[]).filter(k=>save.emp[k])};
@@ -236,8 +236,8 @@ function openPause(fromMenu){pauseFromMenu=fromMenu;if(!fromMenu){if(!S||!['buil
 $('pauseBtn').onclick=()=>{sfx('click');openPause(false)};
 $('settingsBtn').onclick=$('settings2Btn').onclick=()=>{sfx('click');openPause(true)};
 $('resumeBtn').onclick=()=>{sfx('click');show('pause',false);pausedAudio=false;applyVol();if(pauseFromMenu)showMenu();else S.mode=S.prev||'build'};
-$('restartBtn').onclick=()=>{sfx('click');quitRun();restartSame()};
-$('quitBtn').onclick=()=>{sfx('click');quitRun();showMenu()};
+$('restartBtn').onclick=()=>{sfx('click');if(S.tutorial)stopCoach();quitRun();restartSame()};
+$('quitBtn').onclick=()=>{sfx('click');if(S.tutorial)stopCoach();quitRun();showMenu()};
 function restartSame(){hideAll();shopKey='';pausedAudio=false;applyVol();if(S.kind==='mon')startMonster(save.monDeck||ownedMon().slice(0,8));else startDefense(S.run,S.mgr,save.deck&&save.deck.length>=4?save.deck:ownedEmp().slice(0,8))}
 $('againBtn').onclick=()=>{sfx('click');restartSame()};
 $('endMenuBtn').onclick=()=>{sfx('click');showMenu()};
@@ -269,8 +269,9 @@ function drawMegaMenu(){const c=ma;
   for(let k=0;k<8;k++){const b=((T*20+k*23)%150);E(c,20+k*42+Math.sin(T+k)*4,150-b,1.5+k%3,1.5+k%3);c.strokeStyle='rgba(220,250,255,.5)';c.lineWidth=1;c.stroke()}}
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
+  if(S&&typeof tutTick==='function')tutTick(dt);
   if(S){if(S.mode!=='pause')update(dt*((S.mode==='wave'||S.mode==='mplay')?S.speed:1));render();syncUI()}
-  if(!$('menu').hidden)drawMenuArt();requestAnimationFrame(frame)}
+  if(!$('menu').hidden)drawMenuArt();if(!$('askOv').hidden){const a=$('askArt').getContext('2d');a.setTransform(1,0,0,1,0,0);a.clearRect(0,0,240,200);a.setTransform(2,0,0,2,0,0);drawOcto(a,60,62,1.5,T)}requestAnimationFrame(frame)}
 buildIcons();ICONS.plate=icon(c=>drawPlate(c,24,25,1.5));ICONS.wasabi=icon(c=>drawWasabi(c,24,26,1.6));ICONS.freeze=icon(c=>drawSorbet(c,24,22,1.6));
 ICONS.resto={hp:icon(c=>{c.beginPath();c.roundRect(6,22,36,14,4);FS(c,'#5e3d27',2);c.beginPath();c.roundRect(4,17,40,7,3);FS(c,'#8f5f3d',2);for(let k=0;k<3;k++)drawNigiri(c,14+k*10,15,.9)}),
   cash:icon(c=>{for(let k=0;k<6;k++){E(c,12+k*5,34-k*3,6,6);FS(c,'#f1dca2',1.4)}}),cards:icon(c=>{for(let k=0;k<3;k++){c.save();c.translate(24,26);c.rotate((k-1)*.3);c.beginPath();c.roundRect(-9,-13,18,26,3);FS(c,['#46aee8','#ff7a59','#f2c94c'][k],1.8);c.restore()}}),

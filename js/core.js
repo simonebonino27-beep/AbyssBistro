@@ -22,12 +22,12 @@ const DEF_SAVE=()=>({v:2,perle:0,stars:0,runs:0,wins:0,
   best:{short:0,long:0,inf:0,monster:0},vol:{music:60,sfx:80},
   emp:{granchio:1,squalo:1,rana:1,sardine:1,polipetto:1},
   mgr:{polpo:1},mon:{ghiozzo:1,aringa:1,lumaca:1},bossBeat:{},
-  resto:{hp:0,cash:0,cards:0,deco:0},deco:0,deck:null,monDeck:null,mgrSel:'polpo',maxFloor:0,seen:{},dailyDone:0});
+  resto:{hp:0,cash:0,cards:0,deco:0},deco:0,deck:null,monDeck:null,mgrSel:'polpo',maxFloor:0,seen:{},dailyDone:0,asked:0,tutDone:0,novice:0,intro:{}});
 let save=DEF_SAVE();
 function mergeSave(o){const d=DEF_SAVE();const s=Object.assign(d,o||{});
   for(const k of['best','vol','resto'])s[k]=Object.assign(DEF_SAVE()[k],(o||{})[k]||{});
   for(const k of['emp','mgr','mon'])s[k]=Object.assign(DEF_SAVE()[k],(o||{})[k]||{});
-  s.bossBeat=Object.assign({},(o||{}).bossBeat||{});s.seen=Object.assign({},(o||{}).seen||{});return s}
+  s.bossBeat=Object.assign({},(o||{}).bossBeat||{});s.seen=Object.assign({},(o||{}).seen||{});s.intro=Object.assign({},(o||{}).intro||{});return s}
 function loadSave(){
   try{const raw=localStorage.getItem(KEY);if(raw){save=mergeSave(JSON.parse(raw));return}}catch(e){}
   try{const old=localStorage.getItem('abyssBistro.save.v1');if(old){const o=JSON.parse(old);save=DEF_SAVE();save.perle=o.perle||0;save.runs=o.runs||0;save.wins=o.wins||0;if(o.vol)save.vol=Object.assign(save.vol,o.vol);writeSave()}}catch(e){}}

@@ -37,7 +37,7 @@ function genWave(){const boss=isBossWave(),depth=S.depth,w=S.run==='inf'?S.total
   if(boss)q.splice(Math.min(4,q.length),0,[WORLD.floor.boss,3]);return q}
 const bossMul=()=>(S.run==='short'?(S.fi===0?.65:.85):1)*(S.run==='inf'?1+Math.floor(S.total/6)*.6:1);
 function prepWave(){S.nextQ=genWave()}
-function startWave(){if(S.mode!=='build')return;S.queue=S.nextQ||genWave();S.nextQ=null;if(S.mgr==='polpo'||Math.random()<.5)toast(pick(isBossWave()?BOSS_LINES:CHEF_LINES));const w=S.run==='inf'?S.total:S.wave;
+function startWave(){if(S.mode!=='build')return;if(S.tutorial&&!S.tutAllowStart){toast('Segui il Polpo Chef: prima assumi i dipendenti');return}S.queue=S.nextQ||genWave();S.nextQ=null;if(S.mgr==='polpo'||Math.random()<.5)toast(pick(isBossWave()?BOSS_LINES:CHEF_LINES));const w=S.run==='inf'?S.total:S.wave;
   const diff=S.run==='short'?S.fi*1.8:S.run==='long'?S.fi:S.depth;S.hpMul=(1+.13*w)*(1+.3*diff)*(S.run==='inf'?1+Math.max(0,S.total-8)*.06:1);S.spawnT=.3;S.spawnAlt=0;S.mode='wave';
   if(S.mods.drain){S.hp=Math.max(1,S.hp-S.mods.drain);text(180,455,'-'+S.mods.drain+' chef posseduto','#ff4f5e',1.4)}}
 function waveClear(){const boss=isBossWave();
@@ -229,7 +229,7 @@ function update(dt){
   if(S.kind==='def'&&S.mgr==='nonno'&&S.mode==='wave'){S.torpT-=dt;if(S.torpT<=0){S.torpT=6;const tg=S.enemies.filter(e=>!e.disg).sort((a,b)=>prog(b)-prog(a))[0];if(tg){S.shots.push({x:292,y:476,tg,dmg:80*(1+.3*S.depth),torp:1,a:0});sfx('shot')}}}
   if(S.kind==='def'){if(S.hp<=0){S.hp=0;endRun(false);return}if(S.mode==='wave'&&!S.queue.length&&!S.enemies.length)waveClear()}}
 
-function endRun(win){if(S.mode==='end')return;S.mode='end';musicMode=0;sfx(win?'win':'lose');
+function endRun(win){if(S.mode==='end')return;if(S.tutorial&&typeof stopCoach==='function')stopCoach();S.mode='end';musicMode=0;sfx(win?'win':'lose');
   let earned=S.kind==='mon'?Math.round(S.dealt*3+S.earned+(win?200:0)):Math.round(S.earned*.35+(win?150:0));if(S.daily&&win&&save.dailyDone!==S.daily){earned*=2;save.stars+=3;save.dailyDone=S.daily;S.dailyWon=1}save.perle+=earned;save.runs++;if(win)save.wins++;
   const score=S.kind==='mon'?S.round+(win?1:0):S.run==='inf'?S.total:S.fi+(win?1:0);save.best[S.run]=Math.max(save.best[S.run]||0,score);writeSave();ui.showEnd(win,earned)}
 function quitRun(){if(S&&S.mode!=='end'&&S.mode!=='menu'){const earned=S.kind==='mon'?Math.round(S.dealt*3+S.earned):Math.round(S.earned*.35);if(earned>0){save.perle+=earned;writeSave()}}}
@@ -289,6 +289,8 @@ function render(){const c=ctx;c.setTransform(DPR,0,0,DPR,0,0);
   for(const s of S.shots){if(s.torp)drawTorpedo(c,s.x,s.y,s.a);else{c.save();c.translate(s.x,s.y);c.rotate(T*14);drawNigiri(c,0,0,.9);c.restore()}}
   for(const f of S.fx)if(f.k==='tentacle')drawTentacle(c,f.x+10,f.y+2,1,T);
   drawBase(c);
+  if(S.tutorial){const arrow=(x,y)=>{const b=Math.sin(T*6)*5;c.save();c.translate(x,y-46+b);P(c,[-9,-14,9,-14,9,0,16,0,0,16,-16,0,-9,0]);FS(c,'#f1dca2',2.4);c.restore();E(c,x,y-1,22,11);c.strokeStyle='rgba(241,220,162,'+(.5+.4*Math.sin(T*8))+')';c.lineWidth=3;c.stroke()};
+    if(S.tutSlot)arrow(S.tutSlot.x,S.tutSlot.y);if(S.tutTower&&S.towers[0]&&!S.sel)arrow(S.towers[0].x,S.towers[0].y-14)}
   for(const b of snow){c.beginPath();c.arc(b.x,b.y,b.r,0,TAU);if(b.b){c.strokeStyle='rgba(230,250,240,.45)';c.lineWidth=1;c.stroke()}else{c.fillStyle=WORLD.floor.dark>.3?'rgba(160,240,255,.5)':'rgba(230,240,220,.4)';c.fill()}}
   drawManta(c);
   if(S.mode!=='menu'){computeLightsIfIdle();drawDarkness(c,darkLvl(),S.lights)}else drawDarkness(c,WORLD.floor.dark*.7,[{x:180,y:478,r:140}]);

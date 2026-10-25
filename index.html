@@ -31,6 +31,7 @@
   </div>
   <div id="toolInfo" hidden></div>
   <div id="toast" role="status"></div>
+  <div id="coach" hidden></div>
   <div id="panel" hidden></div>
   <div id="bar" class="gut"><div id="barIn">
     <div id="hungerWrap" hidden><span class="fang" aria-hidden="true"></span><div id="hungerBar"><div id="hungerFill"></div></div><span id="hungerLbl">0/100</span></div>
@@ -140,6 +141,25 @@
     </div>
   </div>
 
+  <div class="overlay" id="askOv" hidden>
+    <div class="sheet">
+      <canvas id="askArt" width="240" height="200" aria-hidden="true" style="width:120px;height:100px;margin:0 auto"></canvas>
+      <h2>Benvenuto all'Abyss Bistro!</h2>
+      <p class="lead">Hai già giocato a un tower defense? Quei giochi dove piazzi difensori lungo un percorso per fermare ondate di nemici, tipo Kingdom Rush o Bloons.</p>
+      <button class="big" id="askNo">No, insegnami</button>
+      <button class="ghost" id="askYes">Sì, conosco il genere</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="modeIntro" hidden>
+    <div class="sheet">
+      <p class="eyebrow">Prima volta qui</p>
+      <h2 id="miTitle"></h2>
+      <ul class="ilist" id="miList"></ul>
+      <button class="big" id="miGo">Ho capito, si parte</button>
+    </div>
+  </div>
+
   <div class="overlay" id="codex" hidden>
     <div class="sheet wide">
       <h2>Bestiario</h2>
@@ -153,6 +173,7 @@
   <div class="overlay" id="howto" hidden>
     <div class="sheet wide">
       <h2>Come si gioca</h2>
+      <button class="big" id="tutBtn">Avvia il tutorial guidato</button>
       <ol class="steps" id="howSteps"></ol>
       <div class="sectT">I piani</div>
       <div class="list" id="howFloors"></div>
@@ -178,6 +199,7 @@
 <script src="js/world.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/tutorial.js"></script>
 <!--/APP-->
 </body>
 </html>
