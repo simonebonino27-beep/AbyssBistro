@@ -4,7 +4,16 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 
 **Gioca:** https://simonebonino27-beep.github.io/AbyssBistro/
 
-## Cosa c'è (v5, gioco completo da bilanciare)
+## Cosa c'è (v6, gioco completo da bilanciare)
+
+### Menu
+Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
+1. **Negozio**: offerte del giorno (mancia gratis, un dipendente, un mostro, un pacchetto scontato), pacchetti, sblocchi di dipendenti, gestori e mostri.
+2. **Carte**: livello giocatore, pacchetti da aprire, collezione con copie e potenziamenti.
+3. **Gioca**: sfida del giorno e modalità.
+4. **Amici**: PvP a codice, classifica amici, lista amici, brigate (in arrivo col gioco online).
+5. **Ristorante**: miglioramenti con le stelle, insegne, bestiario, come si gioca, tutorial, impostazioni.
+
 
 ### Modalità
 - **Run corta**: 3 piani (2 a caso + l'Abisso), 3 ondate e un boss per piano.
@@ -74,6 +83,7 @@ js/ui.js          menu, Bistrot, schermate, ciclo principale
 js/cards.js       collezione, copie, pacchetti, livello giocatore
 js/tutorial.js    tutorial guidato e intro delle modalità
 js/social.js      PvP a codice, classifica amici, posta
+js/menu.js        menu a 5 schede, offerte del giorno
 manifest.json     dati dell'app installabile
 sw.js             funzionamento offline
 icons/            icone dell'app

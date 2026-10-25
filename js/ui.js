@@ -4,7 +4,7 @@ const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 const show=(id,on=true)=>{$(id).hidden=!on};
-const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','coll','packOv','pvp','inbox','shareOv','armyOv'];
+const OVERLAYS=['menu','setup','msetup','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','packOv','inbox','shareOv','armyOv'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
 const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
@@ -139,7 +139,7 @@ const MODES=[{id:'short',name:'Run corta',desc:'3 piani: uno facile, uno diffici
   {id:'long',name:'Run lunga',desc:'Tutti e 6 i piani fino al Megalodonte. 5 ondate per piano.',icon:()=>ICONS.e.megalodonte,rec:()=>save.best.long?'Record: '+save.best.long+'/6 piani':'Mai completata'},
   {id:'inf',name:'Infinita',desc:'Ondate senza fine, un boss ogni 5. I piani girano.',icon:()=>ICONS.t.balena,rec:()=>save.best.inf?'Record: '+save.best.inf+' ondate':'Nessun record'},
   {id:'monster',name:'Mostro affamato',desc:'Ruoli invertiti: guidi tu i mostri contro la cucina.',icon:()=>ICONS.e.kraken,rec:()=>save.best.monster?'Record: '+save.best.monster+'/3 round':'Nessun record'}];
-function showMenu(){rnd=Math.random;musicMode=0;pausedAudio=false;applyVol();closePanel();hideAll();idleScene();shopKey='';
+function showMenu(tab){rnd=Math.random;musicMode=0;pausedAudio=false;applyVol();closePanel();hideAll();idleScene();shopKey='';
   $('mPerle').textContent=save.perle;$('mStars').textContent=save.stars;
   const seen=MONSTER_KEYS.filter(k=>save.seen[k]).length;
   $('menuStats').innerHTML='<div><b>'+(save.lvl||1)+'</b>livello</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+Object.keys(save.emp).length+'/'+TOWER_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
@@ -149,7 +149,7 @@ function showMenu(){rnd=Math.random;musicMode=0;pausedAudio=false;applyVol();clo
   $('modeList').querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;withIntro(m,()=>{if(m==='monster')openMSetup();else if(m==='short'&&!save.tutDone&&save.novice)startTutorial();else openSetup(m)})});
   $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;
   if(typeof mailBadge==='function')mailBadge();
-  if(save.packs){const np=Object.values(save.packs).reduce((a,b)=>a+b,0);$('packBadge').hidden=!np;$('packBadge').textContent=np+' da aprire'}show('menu');if(typeof maybeAsk==='function')maybeAsk()}
+  if(save.packs){const np=Object.values(save.packs).reduce((a,b)=>a+b,0);}show('menu');if(typeof menuRender==='function')menuRender(tab);if(typeof maybeAsk==='function')maybeAsk()}
 $('dailyBtn').onclick=()=>{sfx('click');withIntro('daily',()=>{const dy=dailyInfo();hideAll();shopKey='';startDefense('short',dy.mgr,dy.deck,dy);toast('Sfida del giorno: '+dy.curse.name)})};
 const MODE_NAMES={short:'Run corta',long:'Run lunga',inf:'Infinita'};
 function ownedEmp(){return TOWER_KEYS.filter(k=>save.emp[k])}
@@ -178,9 +178,10 @@ $('msetupGo').onclick=()=>{if(pending.mdeck.length<3){toast('Servono almeno 3 mo
 let hubTab='emp';
 const HUB_HINT={emp:'I dipendenti si comprano qui, si trovano nei pacchetti o nelle carte durante le run. Per salire di livello servono le copie dai pacchetti, poi paghi in perle. Ogni livello dà +10% danni.',mgr:'I gestori cambiano le regole della run. Alcuni si comprano, altri si sbloccano con gli obiettivi.',
   mon:'I mostri servono nella modalità Mostro affamato. Per salire di livello servono copie dai pacchetti e perle. Ogni livello dà +12% vita. I boss si sbloccano battendoli in difesa.',resto:'Le stelle Michelin si guadagnano battendo i boss: 1 per boss, 2 se il bancone non ha preso danni in quel piano.'};
-function openHub(tab){hubTab=tab||hubTab;hideAll();renderHub();show('hub')}
+function openHub(tab){if(tab&&tab!=='resto')hubTab=tab;showMenu(tab==='resto'?'resto':'shop')}
 function itemRow(img,name,rar,info,right,locked){return'<div class="item'+(locked?' locked':'')+'"><img alt="" src="'+img+'"><div class="grow"><span class="nm">'+name+'</span>'+(rar?'<span class="chip" style="background:var('+RAR[rar].c+')">'+RAR[rar].n+'</span>':'')+'<span class="md">'+info+'</span></div>'+right+'</div>'}
-function renderHub(){$('hubPerle').textContent=save.perle;$('hubStars').textContent=save.stars;$('hubHint').textContent=HUB_HINT[hubTab];
+function updWallet(){$('mPerle').textContent=save.perle;$('mStars').textContent=save.stars;$('mLvl').textContent=save.lvl||1}
+function renderHub(){updWallet();$('hubHint').textContent=HUB_HINT[hubTab];
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===hubTab));let h='';
   if(hubTab==='emp')for(const k of TOWER_KEYS){const d=TOWERS[k],l=save.emp[k];let r;
     if(!l){const p=RAR[d.rar].price;r='<button class="buy" data-a="buyEmp" data-k="'+k+'"'+(save.perle<p?' disabled':'')+'>Compra<br>'+p+'</button>'}
@@ -193,12 +194,13 @@ function renderHub(){$('hubPerle').textContent=save.perle;$('hubStars').textCont
     if(!l){if(d.boss)r='<span class="req">Batti il boss in difesa</span>';else{const p=Math.round(RAR[d.rar].price*.6);r='<button class="buy" data-a="buyMon" data-k="'+k+'"'+(save.perle<p?' disabled':'')+'>Compra<br>'+p+'</button>'}}
     else if(l>=LVL_MAX)r='<button class="buy done" disabled>Lv MAX</button>';else{const c=monLvlCost(k,l),hv=copiesOf('mon',k),nd=COPIES_FOR[l];r=hv<nd?'<span class="req">Lv '+l+' · copie '+hv+'/'+nd+'<br>dai pacchetti</span>':'<button class="buy" data-a="lvlMon" data-k="'+k+'"'+(save.perle<c?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+c+'</button>'}
     h+=itemRow(ICONS.e[k],d.name,d.rar,d.info+' · '+d.mcost+' fame',r,!l)}
-  else{for(const k of Object.keys(RESTO)){const R=RESTO[k],l=save.resto[k];const r=l>=R.max?'<button class="buy done" disabled>MAX</button>':'<button class="buy" data-a="resto" data-k="'+k+'"'+(save.stars<R.cost(l)?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+R.cost(l)+' ★</button>';
+  $('hubList').innerHTML=h}
+function renderResto(){let h='';$('restoHint').textContent=HUB_HINT.resto;{for(const k of Object.keys(RESTO)){const R=RESTO[k],l=save.resto[k];const r=l>=R.max?'<button class="buy done" disabled>MAX</button>':'<button class="buy" data-a="resto" data-k="'+k+'"'+(save.stars<R.cost(l)?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+R.cost(l)+' ★</button>';
       h+=itemRow(ICONS.resto[k],R.name,null,R.info+' · livello '+l+'/'+R.max,r,false)}
     DECOS.forEach((dc,i)=>{const own=i<=save.resto.deco;const r=!own?'<span class="req">Arredamento Lv '+i+'</span>':save.deco===i?'<button class="buy done" disabled>In uso</button>':'<button class="buy" data-a="deco" data-k="'+i+'">Usa</button>';
       h+=itemRow(ICONS.deco[i],'Insegna: '+dc.name,null,'Colore dell\'insegna del sushi bar',r,!own)})}
-  $('hubList').innerHTML=h}
-$('hubList').addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if(!b||b.disabled)return;const k=b.dataset.k,a=b.dataset.a;let ok=false;
+  $('restoList').innerHTML=h}
+function hubClick(ev){const b=ev.target.closest('button[data-a]');if(!b||b.disabled)return;const k=b.dataset.k,a=b.dataset.a;let ok=false;
   if(a==='buyEmp'){const p=RAR[TOWERS[k].rar].price;if(save.perle>=p){save.perle-=p;save.emp[k]=1;ok=true}}
   else if(a==='lvlEmp'){ok=doLevel('emp',k)}
   else if(a==='buyMgr'){const p=MANAGERS[k].unlock.price;if(save.perle>=p){save.perle-=p;save.mgr[k]=1;ok=true}}
@@ -206,9 +208,9 @@ $('hubList').addEventListener('click',ev=>{const b=ev.target.closest('button[dat
   else if(a==='lvlMon'){ok=doLevel('mon',k)}
   else if(a==='resto'){const R=RESTO[k],c=R.cost(save.resto[k]);if(save.stars>=c&&save.resto[k]<R.max){save.stars-=c;save.resto[k]++;ok=true}}
   else if(a==='deco'){save.deco=+k;ok=true}
-  if(ok){sfx(a.startsWith('buy')?'unlock':'card');writeSave();renderHub()}else sfx('nope')});
+  if(ok){sfx(a.startsWith('buy')?'unlock':'card');writeSave();menuRender()}else sfx('nope')}
+$('hubList').addEventListener('click',hubClick);$('restoList').addEventListener('click',hubClick);
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{sfx('click');hubTab=b.dataset.tab;renderHub()});
-$('hubBtn').onclick=()=>{sfx('click');openHub('emp')};$('hubBack').onclick=()=>{sfx('click');showMenu()};
 
 /* ---------- bestiario ---------- */
 let codexTab='emp';const CODEX_HINT={emp:'Tutti i 17 dipendenti. Quelli bloccati si comprano nel Bistrot o si trovano nelle carte.',en:'I nemici che non hai ancora incontrato restano in ombra.',boss:'Un boss per piano. Battuto, diventa un mostro leggendario per Mostro affamato.',mgr:'Il gestore cambia le regole della run.'};
@@ -244,11 +246,11 @@ $('pauseBtn').onclick=()=>{sfx('click');openPause(false)};
 $('settingsBtn').onclick=$('settings2Btn').onclick=()=>{sfx('click');openPause(true)};
 $('resumeBtn').onclick=()=>{sfx('click');show('pause',false);pausedAudio=false;applyVol();if(pauseFromMenu)showMenu();else S.mode=S.prev||'build'};
 $('restartBtn').onclick=()=>{sfx('click');if(S.tutorial)stopCoach();quitRun();restartSame()};
-$('quitBtn').onclick=()=>{sfx('click');if(S.tutorial)stopCoach();quitRun();showMenu()};
+$('quitBtn').onclick=()=>{sfx('click');if(S.tutorial)stopCoach();quitRun();showMenu('play')};
 function restartSame(){hideAll();shopKey='';pausedAudio=false;applyVol();if(S.duel){S.duel.t==='cc'?startDuelChef(S.duel.seed,S.duel.vs):startDuelMonster(S.duel.seed,S.duel.vs);return}if(S.kitAtk){startKitAttack(S.kitAtk);return}if(S.army){startArmyDefense(S.army);return}if(S.kitBuild){startKitBuilder(WORLD.fi);return}if(S.kind==='mon')startMonster(save.monDeck||ownedMon().slice(0,8));else startDefense(S.run,S.mgr,save.deck&&save.deck.length>=4?save.deck:ownedEmp().slice(0,8))}
 $('againBtn').onclick=()=>{sfx('click');restartSame()};
-$('endMenuBtn').onclick=()=>{sfx('click');showMenu()};
-$('endHubBtn').onclick=()=>{sfx('click');openHub('emp')};
+$('endMenuBtn').onclick=()=>{sfx('click');showMenu('play')};
+$('endHubBtn').onclick=()=>{sfx('click');openColl()};
 for(const[id,k]of[['volMusic','music'],['volSfx','sfx']]){const el=$(id);el.value=save.vol[k];$(id+'Out').textContent=save.vol[k];
   el.addEventListener('input',()=>{save.vol[k]=+el.value;$(id+'Out').textContent=el.value;applyVol();writeSave();if(k==='sfx')sfx('coin')})}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&S&&['build','wave','mplay'].includes(S.mode))openPause(false)});
@@ -284,7 +286,7 @@ ICONS.resto={hp:icon(c=>{c.beginPath();c.roundRect(6,22,36,14,4);FS(c,'#5e3d27',
   cash:icon(c=>{for(let k=0;k<6;k++){E(c,12+k*5,34-k*3,6,6);FS(c,'#f1dca2',1.4)}}),cards:icon(c=>{for(let k=0;k<3;k++){c.save();c.translate(24,26);c.rotate((k-1)*.3);c.beginPath();c.roundRect(-9,-13,18,26,3);FS(c,['#46aee8','#ff7a59','#f2c94c'][k],1.8);c.restore()}}),
   deco:icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,'#3a2a3e',2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle='#ff6ad5';c.fillText('SUSHI',24,28)})};
 ICONS.deco=DECOS.map(dc=>icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,dc.wood,2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle=dc.sign;c.fillText('SUSHI',24,28)}));
-$('tileHub').src=ICONS.m.polpo;setTimeout(()=>{if(ICONS.pack)$('tileColl').src=ICONS.pack.leggendario},0);$('tileCodex').src=ICONS.e.granchioReale;$('tileHow').src=ICONS.t.cavalluccio;$('tileSet').src=ICONS.t.lanterna;$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
+$('tileCodex').src=ICONS.e.granchioReale;$('tileHow').src=ICONS.t.cavalluccio;$('tileSet').src=ICONS.t.lanterna;$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
 window.abyssView=()=>({OX,OY,SC});window.abyssState=()=>S;
 window.abyssIcon=(n,pad)=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const g=x.createRadialGradient(n/2,n*.42,n*.05,n/2,n/2,n*.7);g.addColorStop(0,'#2f6a62');g.addColorStop(1,'#0b1a1c');x.fillStyle=g;x.fillRect(0,0,n,n);const k=n/100*(pad?.78:.9);x.translate(n/2,n/2+n*.06);x.scale(k,k);drawOcto(x,0,0,1.55,.6);return c.toDataURL('image/png')};
 try{if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude\.ai|claudeusercontent/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}

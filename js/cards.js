@@ -50,14 +50,14 @@ ICONS.packBig={};for(const k of PACK_KEYS)ICONS.packBig[k]=icon(c=>drawPack(c,k,
 
 /* ---------- Le mie carte ---------- */
 let collTab='emp';
-function openColl(){hideAll();renderColl();show('coll')}
+function openColl(){showMenu('coll')}
 function charCard(kind,key){const own=kind==='emp'?save.emp:kind==='mon'?save.mon:save.mgr,d=kind==='emp'?TOWERS[key]:kind==='mon'?ENEMIES[key]:MANAGERS[key],l=own[key];
   const img=kind==='emp'?ICONS.t[key]:kind==='mon'?ICONS.e[key]:ICONS.m[key],name=kind==='emp'?d.full:d.name;
   let foot='';if(!l)foot='<span class="cl">Da trovare</span>';else if(kind==='mgr')foot='<span class="cl">Sbloccato</span>';else if(l>=LVL_MAX)foot='<span class="cl">Livello MAX</span>';
   else{const have=copiesOf(kind,key),need=COPIES_FOR[l],ready=have>=need,c=lvlCost(kind,key);foot='<span class="cl">Lv '+l+' · copie '+have+'/'+need+'</span><span class="cbar'+(ready?' full':'')+'"><i style="width:'+Math.min(100,have/need*100)+'%"></i></span>'+
     (ready?'<button class="buy" data-lv="'+kind+':'+key+'"'+(save.perle<c?' disabled':'')+'>Potenzia · '+c+'</button>':'')}
   return'<div class="mc'+(l?'':' unk')+'" style="--rc:var('+RAR[d.rar].c+')"><span class="rr">'+RAR[d.rar].n+'</span><img alt="" src="'+img+'"><span class="nm">'+name+'</span>'+foot+'</div>'}
-function renderColl(){$('collPerle').textContent=save.perle;$('collStars').textContent=save.stars;$('collLvl').textContent='Livello '+save.lvl;$('collXp').style.width=(save.xp/xpNeed(save.lvl)*100)+'%';$('collXpLbl').textContent=save.xp+'/'+xpNeed(save.lvl)+' esperienza';
+function renderColl(){updWallet();$('collLvl').textContent='Livello '+save.lvl;$('collXp').style.width=(save.xp/xpNeed(save.lvl)*100)+'%';$('collXpLbl').textContent=save.xp+'/'+xpNeed(save.lvl)+' esperienza';
   $('packList').innerHTML=PACK_KEYS.map(k=>{const P=PACKS[k],n=save.packs[k]||0;return'<div class="pk" style="--rc:'+P.col+'"><img alt="" src="'+ICONS.pack[k]+'"><div class="grow"><span class="nm">'+P.name+'</span><span class="md">'+P.info+'</span></div><div class="pkb">'+
     (n?'<button class="buy" data-open="'+k+'">Apri ('+n+')</button>':'')+'<button class="buy alt" data-buy="'+k+'"'+(save.perle<P.price?' disabled':'')+'><span class="pearl"></span>'+P.price+'</button></div></div>'}).join('');
   document.querySelectorAll('.coltab').forEach(b=>b.classList.toggle('on',b.dataset.tab===collTab));
@@ -66,11 +66,10 @@ function renderColl(){$('collPerle').textContent=save.perle;$('collStars').textC
   const sorted=keys.slice().sort((a,b)=>(own[b]?1:0)-(own[a]?1:0)||RAR_ORDER.indexOf((collTab==='emp'?TOWERS:collTab==='mon'?ENEMIES:MANAGERS)[a].rar)-RAR_ORDER.indexOf((collTab==='emp'?TOWERS:collTab==='mon'?ENEMIES:MANAGERS)[b].rar));
   $('collGrid').innerHTML=sorted.map(k=>charCard(collTab,k)).join('')}
 $('packList').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||b.disabled)return;
-  if(b.dataset.buy){const k=b.dataset.buy;if(save.perle<PACKS[k].price){sfx('nope');return}save.perle-=PACKS[k].price;save.packs[k]++;writeSave();sfx('coin');renderColl();return}
+  if(b.dataset.buy){const k=b.dataset.buy;if(save.perle<PACKS[k].price){sfx('nope');return}save.perle-=PACKS[k].price;save.packs[k]++;writeSave();sfx('coin');menuRender();toast(PACKS[k].name+' comprato: lo apri in Carte');return}
   if(b.dataset.open)openPack(b.dataset.open)});
 $('collGrid').addEventListener('click',ev=>{const b=ev.target.closest('button[data-lv]');if(!b||b.disabled)return;const[kind,key]=b.dataset.lv.split(':');if(doLevel(kind,key)){sfx('unlock');renderColl()}else sfx('nope')});
 document.querySelectorAll('.coltab').forEach(b=>b.onclick=()=>{sfx('click');collTab=b.dataset.tab;renderColl()});
-$('collBtn').onclick=()=>{sfx('click');openColl()};$('collBack').onclick=()=>{sfx('click');showMenu()};
 
 /* ---------- apertura pacchetto ---------- */
 let packItems=[],packShown=0;

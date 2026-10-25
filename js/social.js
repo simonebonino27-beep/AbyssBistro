@@ -48,7 +48,7 @@ function wireCopy(root){root.querySelectorAll('.copyBtn').forEach(b=>b.onclick=(
 
 /* ---------- schermata PvP ---------- */
 let pvpFloor=0;
-function openPvp(){hideAll();renderPvp();show('pvp')}
+function openPvp(){showMenu('social')}
 function renderPvp(){$('pvpName').value=save.name;$('pvpMsg').textContent='';
   $('pvpFloors').innerHTML=FLOORS.map((f,i)=>'<button class="fchip'+(i===pvpFloor?' on':'')+'" data-f="'+i+'">'+(i+1)+'. '+f.name+'</button>').join('');
   $('pvpFloors').querySelectorAll('.fchip').forEach(b=>b.onclick=()=>{sfx('click');pvpFloor=+b.dataset.f;renderPvp()});
@@ -76,7 +76,6 @@ $('pvpCC').onclick=()=>{sfx('click');withIntro('pvpcc',()=>{startDuelChef(newSee
 $('pvpMM').onclick=()=>{sfx('click');withIntro('pvpmm',()=>{startDuelMonster(newSeed(),null);toast('Duello mostri: fai più danni possibile, poi manda il codice')})};
 $('pvpCM').onclick=()=>{sfx('click');withIntro('pvpcm',()=>{startKitBuilder(pvpFloor);toast('Hai 1000 perle: costruisci la cucina, poi crea il codice')})};
 $('pvpMC').onclick=()=>{sfx('click');withIntro('pvpmc',()=>openArmy())};
-$('pvpBtn').onclick=()=>{sfx('click');openPvp()};$('pvpBack').onclick=()=>{sfx('click');showMenu()};
 Object.assign(MODE_INTRO,{
   pvpcc:{title:'Chef contro Chef',items:[['m:polpo','Giochi un piano con 4 ondate e il boss, con un mazzo deciso dal codice.'],['t:granchio','Il tuo amico riceve lo stesso piano, le stesse ondate e le stesse carte. Vince chi fa più punti.'],['e:ghiozzo','Punti: 1000 per ondata superata, più vita rimasta e perle guadagnate.']]},
   pvpmm:{title:'Mostro contro Mostro',items:[['e:kraken','Un round di Mostro affamato con mostri e piano decisi dal codice.'],['e:ghiozzo','L\'amico attacca la stessa cucina con gli stessi mostri. Vince chi fa più danni e mangia il bancone più in fretta.']]},
@@ -120,5 +119,5 @@ $('mailAll').onclick=()=>{save.inbox.forEach(claim);writeSave();sfx('unlock');re
 $('mailBtn').onclick=()=>{sfx('click');openInbox()};$('mailBack').onclick=()=>{sfx('click');showMenu()};
 function mailBadge(){const n=save.inbox.filter(m=>!m.claimed).length;$('mailBadge').hidden=!n;$('mailBadge').textContent=n}
 checkLogin();
-$('tilePvp').src=ICONS.e.megalodonte;$('pvpI1').src=ICONS.m.polpo;$('pvpI2').src=ICONS.e.kraken;$('pvpI3').src=ICONS.t.balena;$('pvpI4').src=ICONS.e.megalodonte;
+$('pvpI1').src=ICONS.m.polpo;$('pvpI2').src=ICONS.e.kraken;$('pvpI3').src=ICONS.t.balena;$('pvpI4').src=ICONS.e.megalodonte;
 if(!$('menu').hidden){mailBadge()}
