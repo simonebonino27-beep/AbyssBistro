@@ -41,6 +41,7 @@
       <button class="act" id="abilityBtn"><img alt="" id="abilityIco"><span id="abilityLbl">Trappole</span></button>
       <button class="act" id="wasabiBtn" hidden><img alt="" id="wasabiIco"><span id="wasabiCnt">0</span></button>
       <button class="act" id="freezeBtn" hidden><img alt="" id="freezeIco"><span id="freezeCnt">0</span></button>
+      <button class="act" id="handBtn" title="Cambia i 4 dipendenti in mano" aria-label="Rimescola la mano per 15 perle"><span class="rr2">&#x21bb;</span><span>15</span></button>
       <button class="act" id="laneBtn" hidden><span id="laneLbl">Corsia A</span></button>
       <button id="startBtn">Inizia ondata 1</button>
     </div>
@@ -57,6 +58,7 @@
       <div class="sectT">Modalità</div>
       <div class="modes" id="modeList"></div>
       <div class="tiles">
+        <button class="tile hero" id="collBtn"><img alt="" id="tileColl"><span class="tn">Le mie carte</span><span class="td" id="collSub">Collezione e pacchetti</span><span class="badge" id="packBadge" hidden>0</span></button>
         <button class="tile" id="hubBtn"><img alt="" id="tileHub"><span class="tn">Il Bistrot</span><span class="td">Sblocchi, livelli e ristorante</span></button>
         <button class="tile" id="codexBtn"><img alt="" id="tileCodex"><span class="tn">Bestiario</span><span class="td" id="codexCount">Tutti i personaggi</span></button>
         <button class="tile" id="howBtn"><img alt="" id="tileHow"><span class="tn">Come si gioca</span><span class="td">Regole, piani e trucchi</span></button>
@@ -160,6 +162,34 @@
     </div>
   </div>
 
+  <div class="overlay" id="coll" hidden>
+    <div class="sheet wide">
+      <h2>Le mie carte</h2>
+      <div class="wallet"><span><span class="pearl"></span><b id="collPerle">0</b></span><span><span class="starI"></span><b id="collStars">0</b></span></div>
+      <div class="xpbox"><b id="collLvl">Livello 1</b><span class="xpbar"><i id="collXp"></i></span><span class="hint" id="collXpLbl"></span></div>
+      <p class="hint">Ogni livello ti regala un pacchetto. Ogni boss battuto ne dà uno, più raro più è profondo il piano. Le copie doppie servono per potenziare: raggiunte quelle richieste, paghi il potenziamento in perle.</p>
+      <div class="sectT">Pacchetti</div>
+      <div class="list" id="packList"></div>
+      <div class="sectT">Collezione <span class="hint" id="collCount"></span></div>
+      <div class="tabs" role="tablist"><button class="coltab on" data-tab="emp">Dipendenti</button><button class="coltab" data-tab="mon">Mostri</button><button class="coltab" data-tab="mgr">Gestori</button></div>
+      <div class="cgrid mcg" id="collGrid"></div>
+      <button class="big" id="collBack">Torna al menu</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="packOv" hidden>
+    <div class="sheet">
+      <p class="eyebrow">Apertura pacchetto</p>
+      <h2 id="packTitle"></h2>
+      <input type="hidden" id="packTier">
+      <img alt="Pacchetto: toccalo per aprirlo" id="packImg" class="packImg">
+      <div class="pgrid" id="packGrid"></div>
+      <p class="hint center" id="packHint"></p>
+      <button class="big" id="packAgain" hidden>Apri un altro</button>
+      <button class="ghost" id="packDone" hidden>Alla collezione</button>
+    </div>
+  </div>
+
   <div class="overlay" id="codex" hidden>
     <div class="sheet wide">
       <h2>Bestiario</h2>
@@ -199,6 +229,7 @@
 <script src="js/world.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/cards.js"></script>
 <script src="js/tutorial.js"></script>
 <!--/APP-->
 </body>

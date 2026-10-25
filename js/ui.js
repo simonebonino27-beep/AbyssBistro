@@ -4,7 +4,7 @@ const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 const show=(id,on=true)=>{$(id).hidden=!on};
-const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto','askOv','modeIntro'];
+const OVERLAYS=['menu','setup','msetup','hub','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','coll','packOv'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
 const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
@@ -58,7 +58,7 @@ function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderS
   if(mon){setT('hpLbl',String(Math.max(0,Math.ceil(S.baseHp))));$('perlePill').hidden=true;const m=Math.max(0,Math.ceil(S.timer));setT('waveLbl','Round '+(S.fi+1)+'/3 · '+Math.floor(m/60)+':'+String(m%60).padStart(2,'0'));
     $('hungerWrap').hidden=false;$('hungerFill').style.width=(S.hunger/S.hungerMax*100)+'%';setT('hungerLbl',Math.floor(S.hunger)+'/'+S.hungerMax);
     for(const b of shop.children){const k=S.mhand[b.dataset.i];if(!k)continue;const c=monCost(k);b.classList.toggle('poor',S.hunger<c);const cs=b.querySelector('.cs');const h='<span class="fang"></span>'+c;if(cs.dataset.h!==h){cs.dataset.h=h;cs.innerHTML=h}}
-    $('abilityBtn').hidden=true;$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
+    $('abilityBtn').hidden=true;$('handBtn').hidden=true;$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
     $('laneBtn').hidden=WORLD.paths.length<2;setT('laneLbl',S.lane?'Corsia destra':'Corsia sinistra')}
   else{setT('hpLbl',String(S.hp));$('perlePill').hidden=false;setT('perleLbl',String(S.perle));$('hungerWrap').hidden=true;$('laneBtn').hidden=true;
     const boss=isBossWave();setT('waveLbl',S.run==='inf'?'Ondata '+(S.total+1)+(boss?' · Boss':''):'Piano '+(S.fi+1)+' · '+(boss?'Boss':(S.wave+1)+'/'+wavesPer()));
@@ -67,7 +67,7 @@ function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderS
     if(ab.dataset.m!==S.mgr){ab.dataset.m=S.mgr;$('abilityIco').src=S.mgr==='polpo'?ICONS.plate:ICONS.m[S.mgr]}
     setT('abilityLbl',S.mgr==='polpo'?String(S.traps):mgrShort[S.mgr]);
     $('wasabiBtn').hidden=S.wasabi<=0;setT('wasabiCnt',String(S.wasabi));$('freezeBtn').hidden=S.freeze<=0;setT('freezeCnt',String(S.freeze));
-    $('startBtn').hidden=S.mode!=='build';setT('startBtn',boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
+    $('startBtn').hidden=S.mode!=='build';$('handBtn').hidden=S.mode!=='build';$('handBtn').classList.toggle('poor',S.perle<15);setT('startBtn',boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
   syncToolInfo();syncPreview();setT('speedBtn','x'+S.speed)}
 function statLine(k){const d=TOWERS[k],meta=1+.1*((save.emp[k]||1)-1),dm=d.dmg*(S&&S.kind==='def'?S.mods.dmg[k]*S.mods.all:1)*meta,rg=Math.round(d.range*(S&&S.kind==='def'?S.mods.range:1));
   switch(d.kind){case'light':return'Raggio di luce '+rg+' · i nemici illuminati prendono +15% danni';case'buff':return'Raggio '+rg+' · +30% velocità d\'attacco ai vicini';
@@ -86,6 +86,8 @@ $('abilityBtn').onclick=()=>{if(!S||S.kind!=='def')return;if(S.mgr!=='polpo'){to
 $('wasabiBtn').onclick=()=>{if(S.mode!=='wave'||S.wasabi<=0){toast('Usala quando arrivano i nemici');return}S.wasabi--;sfx('boom');S.shake=.4;fx({k:'flash',dur:.5});for(const e of[...S.enemies])hurt(e,60,{boom:1});toast('WASABI INDUSTRIALE!')};
 $('freezeBtn').onclick=()=>{if(S.mode!=='wave'||S.freeze<=0){toast('Usalo quando arrivano i nemici');return}S.freeze--;S.freezeT=4;sfx('zap');fx({k:'flash',dur:.5,col:'#bfe9ff'});toast('Cervelli congelati per 4 secondi')};
 $('laneBtn').onclick=()=>{S.lane=S.lane?0:1;sfx('click')};
+$('handBtn').onclick=()=>{if(!S||S.kind!=='def')return;if(S.mode!=='build'){sfx('nope');toast('La mano si rimescola solo tra un\'ondata e l\'altra');return}if(S.perle<15){sfx('nope');toast('Servono 15 perle');return}
+  S.perle-=15;S.tool=null;closePanel();for(let i=0;i<4;i++){if(S.hand[i])S.pile.push(S.hand[i]);S.hand[i]=drawCard()}sfx('card');toast('Mano nuova dal mazzo')};
 $('speedBtn').onclick=()=>{if(!S)return;sfx('click');S.speed=S.speed===1?2:1};
 $('startBtn').onclick=()=>{sfx('click');closePanel();startWave()};
 
@@ -98,12 +100,13 @@ function renderCards(){const list=$('cardList');list.innerHTML='';
       const img=c.icon?'<img alt="" src="'+(c.mon?ICONS.e[c.icon]:ICONS.t[c.icon])+'">':'';b.innerHTML=img+'<div class="cb">'+cardHTML(c)+'</div>';
       b.onclick=()=>{if(cardPicked[hi])return;c.apply(S);cardPicked[hi]=1;sfx(c.id&&c.id.startsWith('new_')&&S.found.length?'unlock':'card');
         if(cardPicked.every(Boolean)){show('cards',false);afterCards();if(S.mode==='build')toast(isBossWave()?'Ultima preparazione: arriva il boss':'Assumi qualcuno, poi inizia l\'ondata')}else renderCards()};list.appendChild(b)}});
-  $('rerollBtn').hidden=!(S.kind==='def'&&S.rerolls>0);$('rerollBtn').textContent='Rimescola ('+S.rerolls+')'}
+  const rb=$('rerollBtn');rb.hidden=S.kind!=='def';if(S.rerolls>0){rb.innerHTML='Rimescola gratis ('+S.rerolls+')';rb.disabled=false}else{const c=rerollCost();rb.innerHTML='Rimescola · <span class="pearl"></span> '+c+' perle (ne hai '+S.perle+')';rb.disabled=S.perle<c}}
+const rerollCost=()=>30+20*(S.paidRerolls||0);
 function showCards(bonus,boss){closePanel();S.tool=null;const mon=S.kind==='mon';
   $('cardsEyebrow').textContent=mon?'Bancone divorato · round '+(S.fi+1)+' vinto':boss?'Boss battuto · +'+bonus+' perle':'Ondata superata · +'+bonus+' perle';
   const two=!mon&&S.mgr==='gamberi';$('cardsTitle').textContent=two?'Scegli una carta per mano':'Scegli una carta';
   cardHands=mon?[pickMCards(S,3)]:two?[pickCards(S,S.cardN),pickCards(S,S.cardN)]:[pickCards(S,S.cardN)];cardPicked=cardHands.map(()=>0);renderCards();show('cards')}
-$('rerollBtn').onclick=()=>{if(S.rerolls<=0)return;S.rerolls--;sfx('click');cardHands=cardHands.map((h,i)=>cardPicked[i]?h:pickCards(S,S.cardN));renderCards()};
+$('rerollBtn').onclick=()=>{if(S.rerolls>0)S.rerolls--;else{const c=rerollCost();if(S.perle<c){sfx('nope');return}S.perle-=c;S.paidRerolls=(S.paidRerolls||0)+1;sfx('coin')}sfx('click');cardHands=cardHands.map((h,i)=>cardPicked[i]?h:pickCards(S,S.cardN));renderCards()};
 
 /* ---------- piani e fine run ---------- */
 function floorIntro(){closePanel();const F=WORLD.floor,mon=S.kind==='mon';
@@ -124,7 +127,7 @@ function showEnd(win,earned){closePanel();hideAll();const mon=S.kind==='mon';
     $('endText').textContent=win?'Il Megalodonte se ne va con il conto pagato. Il Polpo Chef non dorme da una settimana.':'Il Polpo Chef raccoglie i pezzi del bancone. Domani riapre, con altre carte e altro personale.'}
   $('endStats').innerHTML='<div><b>+'+earned+'</b>perle</div><div><b>'+save.perle+'</b>perle totali</div>'+(mon?'':'<div><b>+'+S.stars+'</b>stelle</div>');
   if(S.dailyWon)$('endText').textContent+=' Sfida del giorno vinta: perle doppie e 3 stelle!';
-  $('endFound').innerHTML=S.found.length?foundHTML(S.found):'';show('end')}
+  $('endFound').innerHTML=(S.found.length?foundHTML(S.found):'')+(typeof rewardsHTML==='function'?rewardsHTML():'');show('end')}
 const ui={floorIntro,showCards,showEnd,nearSlot};
 
 /* ---------- menu e preparazione ---------- */
@@ -137,12 +140,13 @@ const MODES=[{id:'short',name:'Run corta',desc:'3 piani: uno facile, uno diffici
 function showMenu(){musicMode=0;pausedAudio=false;applyVol();closePanel();hideAll();idleScene();shopKey='';
   $('mPerle').textContent=save.perle;$('mStars').textContent=save.stars;
   const seen=MONSTER_KEYS.filter(k=>save.seen[k]).length;
-  $('menuStats').innerHTML='<div><b>'+save.runs+'</b>run giocate</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+Object.keys(save.emp).length+'/'+TOWER_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
+  $('menuStats').innerHTML='<div><b>'+(save.lvl||1)+'</b>livello</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+Object.keys(save.emp).length+'/'+TOWER_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
   const dy=dailyInfo(),done=save.dailyDone===dy.key;
   $('dailyBtn').innerHTML='<span class="dTag">Sfida del giorno · '+dy.label+'</span><span class="dName">'+MANAGERS[dy.mgr].name+' + '+dy.curse.name+'</span><span class="dRule">Run corta con gestore e mazzo fissi, uguali per tutti. Maledizione già attiva: '+dy.curse.eff(newRun('def','short',{}))+'</span><span class="dDeck">'+dy.deck.map(k=>'<img alt="" title="'+TOWERS[k].full+'" src="'+ICONS.t[k]+'">').join('')+'</span><span class="dRew">'+(done?'Completata oggi. Domani ne arriva una nuova.':'Premio alla vittoria: perle x2 e 3 stelle')+'</span>'+(done?'<span class="dDone">Fatta</span>':'');
   $('modeList').innerHTML=MODES.map(m=>'<button class="mode" data-mode="'+m.id+'"><img alt="" src="'+m.icon()+'"><span class="mb"><span class="mn">'+m.name+'</span><span class="md">'+m.desc+'</span><span class="rec">'+m.rec()+'</span></span></button>').join('');
   $('modeList').querySelectorAll('.mode').forEach(b=>b.onclick=()=>{sfx('click');const m=b.dataset.mode;withIntro(m,()=>{if(m==='monster')openMSetup();else if(m==='short'&&!save.tutDone&&save.novice)startTutorial();else openSetup(m)})});
-  $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;show('menu');if(typeof maybeAsk==='function')maybeAsk()}
+  $('codexCount').textContent=seen+' mostri visti su '+MONSTER_KEYS.length;
+  if(save.packs){const np=Object.values(save.packs).reduce((a,b)=>a+b,0);$('packBadge').hidden=!np;$('packBadge').textContent=np+' da aprire'}show('menu');if(typeof maybeAsk==='function')maybeAsk()}
 $('dailyBtn').onclick=()=>{sfx('click');withIntro('daily',()=>{const dy=dailyInfo();hideAll();shopKey='';startDefense('short',dy.mgr,dy.deck,dy);toast('Sfida del giorno: '+dy.curse.name)})};
 const MODE_NAMES={short:'Run corta',long:'Run lunga',inf:'Infinita'};
 function ownedEmp(){return TOWER_KEYS.filter(k=>save.emp[k])}
@@ -169,22 +173,22 @@ $('msetupGo').onclick=()=>{if(pending.mdeck.length<3){toast('Servono almeno 3 mo
 
 /* ---------- il Bistrot (progressione) ---------- */
 let hubTab='emp';
-const HUB_HINT={emp:'I dipendenti si comprano qui o si trovano nelle carte durante le run. Ogni livello dà +10% danni.',mgr:'I gestori cambiano le regole della run. Alcuni si comprano, altri si sbloccano con gli obiettivi.',
-  mon:'I mostri servono nella modalità Mostro affamato. Ogni livello dà +12% vita. I boss si sbloccano battendoli in difesa.',resto:'Le stelle Michelin si guadagnano battendo i boss: 1 per boss, 2 se il bancone non ha preso danni in quel piano.'};
+const HUB_HINT={emp:'I dipendenti si comprano qui, si trovano nei pacchetti o nelle carte durante le run. Per salire di livello servono le copie dai pacchetti, poi paghi in perle. Ogni livello dà +10% danni.',mgr:'I gestori cambiano le regole della run. Alcuni si comprano, altri si sbloccano con gli obiettivi.',
+  mon:'I mostri servono nella modalità Mostro affamato. Per salire di livello servono copie dai pacchetti e perle. Ogni livello dà +12% vita. I boss si sbloccano battendoli in difesa.',resto:'Le stelle Michelin si guadagnano battendo i boss: 1 per boss, 2 se il bancone non ha preso danni in quel piano.'};
 function openHub(tab){hubTab=tab||hubTab;hideAll();renderHub();show('hub')}
 function itemRow(img,name,rar,info,right,locked){return'<div class="item'+(locked?' locked':'')+'"><img alt="" src="'+img+'"><div class="grow"><span class="nm">'+name+'</span>'+(rar?'<span class="chip" style="background:var('+RAR[rar].c+')">'+RAR[rar].n+'</span>':'')+'<span class="md">'+info+'</span></div>'+right+'</div>'}
 function renderHub(){$('hubPerle').textContent=save.perle;$('hubStars').textContent=save.stars;$('hubHint').textContent=HUB_HINT[hubTab];
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===hubTab));let h='';
   if(hubTab==='emp')for(const k of TOWER_KEYS){const d=TOWERS[k],l=save.emp[k];let r;
     if(!l){const p=RAR[d.rar].price;r='<button class="buy" data-a="buyEmp" data-k="'+k+'"'+(save.perle<p?' disabled':'')+'>Compra<br>'+p+'</button>'}
-    else if(l>=LVL_MAX)r='<button class="buy done" disabled>Lv MAX</button>';else{const c=empLvlCost(k,l);r='<button class="buy" data-a="lvlEmp" data-k="'+k+'"'+(save.perle<c?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+c+'</button>'}
+    else if(l>=LVL_MAX)r='<button class="buy done" disabled>Lv MAX</button>';else{const c=empLvlCost(k,l),hv=copiesOf('emp',k),nd=COPIES_FOR[l];r=hv<nd?'<span class="req">Lv '+l+' · copie '+hv+'/'+nd+'<br>dai pacchetti</span>':'<button class="buy" data-a="lvlEmp" data-k="'+k+'"'+(save.perle<c?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+c+'</button>'}
     h+=itemRow(ICONS.t[k],d.full,d.rar,d.info+' · '+d.cost+' perle in partita',r,!l)}
   else if(hubTab==='mgr')for(const k of MANAGER_KEYS){const m=MANAGERS[k],own=save.mgr[k];let r;
     if(own)r='<button class="buy done" disabled>Tuo</button>';else if(m.unlock.type==='buy')r='<button class="buy" data-a="buyMgr" data-k="'+k+'"'+(save.perle<m.unlock.price?' disabled':'')+'>Compra<br>'+m.unlock.price+'</button>';else r='<span class="req">'+m.unlock.text+'</span>';
     h+=itemRow(ICONS.m[k],m.name,m.rar,m.info,r,!own)}
   else if(hubTab==='mon')for(const k of MONSTER_KEYS){const d=ENEMIES[k],l=save.mon[k];let r;
     if(!l){if(d.boss)r='<span class="req">Batti il boss in difesa</span>';else{const p=Math.round(RAR[d.rar].price*.6);r='<button class="buy" data-a="buyMon" data-k="'+k+'"'+(save.perle<p?' disabled':'')+'>Compra<br>'+p+'</button>'}}
-    else if(l>=LVL_MAX)r='<button class="buy done" disabled>Lv MAX</button>';else{const c=monLvlCost(k,l);r='<button class="buy" data-a="lvlMon" data-k="'+k+'"'+(save.perle<c?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+c+'</button>'}
+    else if(l>=LVL_MAX)r='<button class="buy done" disabled>Lv MAX</button>';else{const c=monLvlCost(k,l),hv=copiesOf('mon',k),nd=COPIES_FOR[l];r=hv<nd?'<span class="req">Lv '+l+' · copie '+hv+'/'+nd+'<br>dai pacchetti</span>':'<button class="buy" data-a="lvlMon" data-k="'+k+'"'+(save.perle<c?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+c+'</button>'}
     h+=itemRow(ICONS.e[k],d.name,d.rar,d.info+' · '+d.mcost+' fame',r,!l)}
   else{for(const k of Object.keys(RESTO)){const R=RESTO[k],l=save.resto[k];const r=l>=R.max?'<button class="buy done" disabled>MAX</button>':'<button class="buy" data-a="resto" data-k="'+k+'"'+(save.stars<R.cost(l)?' disabled':'')+'>Lv '+l+'→'+(l+1)+'<br>'+R.cost(l)+' ★</button>';
       h+=itemRow(ICONS.resto[k],R.name,null,R.info+' · livello '+l+'/'+R.max,r,false)}
@@ -193,10 +197,10 @@ function renderHub(){$('hubPerle').textContent=save.perle;$('hubStars').textCont
   $('hubList').innerHTML=h}
 $('hubList').addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if(!b||b.disabled)return;const k=b.dataset.k,a=b.dataset.a;let ok=false;
   if(a==='buyEmp'){const p=RAR[TOWERS[k].rar].price;if(save.perle>=p){save.perle-=p;save.emp[k]=1;ok=true}}
-  else if(a==='lvlEmp'){const c=empLvlCost(k,save.emp[k]);if(save.perle>=c){save.perle-=c;save.emp[k]++;ok=true}}
+  else if(a==='lvlEmp'){ok=doLevel('emp',k)}
   else if(a==='buyMgr'){const p=MANAGERS[k].unlock.price;if(save.perle>=p){save.perle-=p;save.mgr[k]=1;ok=true}}
   else if(a==='buyMon'){const p=Math.round(RAR[ENEMIES[k].rar].price*.6);if(save.perle>=p){save.perle-=p;save.mon[k]=1;ok=true}}
-  else if(a==='lvlMon'){const c=monLvlCost(k,save.mon[k]);if(save.perle>=c){save.perle-=c;save.mon[k]++;ok=true}}
+  else if(a==='lvlMon'){ok=doLevel('mon',k)}
   else if(a==='resto'){const R=RESTO[k],c=R.cost(save.resto[k]);if(save.stars>=c&&save.resto[k]<R.max){save.stars-=c;save.resto[k]++;ok=true}}
   else if(a==='deco'){save.deco=+k;ok=true}
   if(ok){sfx(a.startsWith('buy')?'unlock':'card');writeSave();renderHub()}else sfx('nope')});
@@ -277,7 +281,7 @@ ICONS.resto={hp:icon(c=>{c.beginPath();c.roundRect(6,22,36,14,4);FS(c,'#5e3d27',
   cash:icon(c=>{for(let k=0;k<6;k++){E(c,12+k*5,34-k*3,6,6);FS(c,'#f1dca2',1.4)}}),cards:icon(c=>{for(let k=0;k<3;k++){c.save();c.translate(24,26);c.rotate((k-1)*.3);c.beginPath();c.roundRect(-9,-13,18,26,3);FS(c,['#46aee8','#ff7a59','#f2c94c'][k],1.8);c.restore()}}),
   deco:icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,'#3a2a3e',2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle='#ff6ad5';c.fillText('SUSHI',24,28)})};
 ICONS.deco=DECOS.map(dc=>icon(c=>{c.beginPath();c.roundRect(4,16,40,16,4);FS(c,dc.wood,2);c.font='11px Bangers,Impact';c.textAlign='center';c.fillStyle=dc.sign;c.fillText('SUSHI',24,28)}));
-$('tileHub').src=ICONS.m.polpo;$('tileCodex').src=ICONS.e.granchioReale;$('tileHow').src=ICONS.t.cavalluccio;$('tileSet').src=ICONS.t.lanterna;$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
+$('tileHub').src=ICONS.m.polpo;setTimeout(()=>{if(ICONS.pack)$('tileColl').src=ICONS.pack.leggendario},0);$('tileCodex').src=ICONS.e.granchioReale;$('tileHow').src=ICONS.t.cavalluccio;$('tileSet').src=ICONS.t.lanterna;$('wasabiIco').src=ICONS.wasabi;$('freezeIco').src=ICONS.freeze;$('abilityIco').src=ICONS.plate;
 window.abyssView=()=>({OX,OY,SC});window.abyssState=()=>S;
 window.abyssIcon=(n,pad)=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const g=x.createRadialGradient(n/2,n*.42,n*.05,n/2,n/2,n*.7);g.addColorStop(0,'#2f6a62');g.addColorStop(1,'#0b1a1c');x.fillStyle=g;x.fillRect(0,0,n,n);const k=n/100*(pad?.78:.9);x.translate(n/2,n/2+n*.06);x.scale(k,k);drawOcto(x,0,0,1.55,.6);return c.toDataURL('image/png')};
 try{if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude\.ai|claudeusercontent/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}

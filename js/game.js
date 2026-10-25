@@ -42,11 +42,11 @@ function startWave(){if(S.mode!=='build')return;if(S.tutorial&&!S.tutAllowStart)
   if(S.mods.drain){S.hp=Math.max(1,S.hp-S.mods.drain);text(180,455,'-'+S.mods.drain+' chef posseduto','#ff4f5e',1.4)}}
 function waveClear(){const boss=isBossWave();
   for(const t of S.towers)if(t.key==='ostrica'){if(t.robbed){t.robbed=0;text(t.x,t.y-24,'Derubata!','#ff4f5e',1.2)}else{const g=30+12*(t.lv-1);S.perle+=g;S.earned+=g;text(t.x,t.y-24,'+'+g,'#f1dca2',1.2);t.anim=1}}
-  const bonus=25+Math.min(S.total,12)*8;S.perle+=bonus;S.earned+=bonus;S.total++;
+  const bonus=25+Math.min(S.total,12)*8;S.perle+=bonus;S.earned+=bonus;S.total++;if(!S.tutorial||true)addXP(boss?60:12);
   if(boss){const st=1+(S.floorHit?0:1);S.stars+=st;save.stars+=st;const bk=WORLD.floor.boss;
     if(!save.bossBeat[bk]){save.bossBeat[bk]=1;if(!save.mon[bk])save.mon[bk]=1;S.found.push(bk)}save.maxFloor=Math.max(save.maxFloor,WORLD.fi);
     for(const m of MANAGER_KEYS){const u=MANAGERS[m].unlock;if(save.mgr[m])continue;if((u.type==='boss'&&save.bossBeat[u.boss])||(u.type==='floor'&&save.maxFloor>=u.floor)){save.mgr[m]=1;S.found.push('mgr:'+m)}}
-    writeSave();
+    awardPack(FLOOR_PACK[WORLD.fi],'boss battuto');writeSave();
     if(S.run!=='inf'&&S.fi>=S.floors.length-1){endRun(true);return}
     S.pendingFloor=st}else S.wave++;
   S.mode='cards';ui.showCards(bonus,boss)}
@@ -76,7 +76,7 @@ function aiThink(force){const free=WORLD.slots.filter(s=>!s.tower),dk=WORLD.floo
   else{const up=S.towers.filter(t=>t.lv<3&&TOWERS[t.key].cost*.75*t.lv<=S.ai.budget);if(up.length){const t=pick(up);S.ai.budget-=TOWERS[t.key].cost*.75*t.lv;t.lv++;fx({k:'ring',x:t.x,y:t.y,r:26,dur:.4,col:'#e8c14a'})}}}
 function updMonster(dt){S.hunger=Math.min(S.hungerMax,S.hunger+9*S.mm.regen*dt);S.timer-=dt;S.ai.budget+=S.ai.income*dt;S.ai.t-=dt;
   if(S.ai.t<=0){S.ai.t=Math.max(2.4,3.8-S.round*.5);aiThink()}
-  if(S.baseHp<=0){S.baseHp=0;S.mode='cards';sfx('win');S.earned+=80;if(S.fi>=S.floors.length-1){endRun(true);return}ui.showCards(80,false);return}
+  if(S.baseHp<=0){S.baseHp=0;S.mode='cards';sfx('win');S.earned+=80;addXP(45);awardPack(['comune','raro','epico'][Math.min(2,S.fi)],'round vinto');if(S.fi>=S.floors.length-1){endRun(true);return}ui.showCards(80,false);return}
   if(S.timer<=0){S.timer=0;endRun(false)}}
 
 /* ---------- entità ---------- */

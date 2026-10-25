@@ -235,3 +235,54 @@ input[type=range]{width:100%;accent-color:var(--coral)}
 .ilist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left}
 .ilist li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;background:var(--deep);border:2px solid var(--ink);border-radius:12px;padding:8px;font-size:14px;font-weight:600;line-height:1.4}
 .ilist img{width:40px;height:40px}
+
+/* collezione e pacchetti */
+.tile.hero{grid-column:1/-1;background:linear-gradient(135deg,#2a1f3e,#16252a);border-color:var(--r-epico);position:relative}
+.tile .badge{position:absolute;top:8px;right:10px;background:var(--danger);color:#fff;font-size:12px;border-radius:999px;padding:2px 8px;border:2px solid var(--ink)}
+.xpbox{display:flex;flex-direction:column;gap:4px;align-items:center}
+.xpbox b{font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:1px;color:var(--pearl)}
+.xpbar{width:100%;max-width:320px;height:12px;background:var(--glass);border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--r-raro)}
+.pk{display:flex;align-items:center;gap:10px;background:var(--deep);border:2px solid var(--rc);border-radius:12px;padding:8px}
+.pk img{width:56px;height:56px}
+.pk .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pk .nm{font-family:var(--display);font-size:19px;letter-spacing:.6px;color:var(--pearl)}
+.pk .md{font-size:12px;font-weight:600;color:var(--mist)}
+.pkb{display:flex;flex-direction:column;gap:5px}
+.buy.alt{background:var(--tide);color:var(--foam)}
+.mcg{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.mc{position:relative;background:var(--deep);border:3px solid var(--rc);border-radius:12px;padding:16px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;min-width:0}
+.mc .rr{position:absolute;top:0;left:0;right:0;background:var(--rc);color:var(--ink);font-size:10px;border-radius:8px 8px 0 0;padding:1px 0}
+.mc img{width:56px;height:56px}
+.mc .nm{font-size:12px;line-height:1.15;color:var(--foam)}
+.mc .cl{font-size:11px;color:var(--mist);font-variant-numeric:tabular-nums}
+.mc .cbar{width:100%;height:6px;background:var(--abyss);border-radius:4px;overflow:hidden}
+.mc .cbar i{display:block;height:100%;background:var(--pearl)}
+.mc .cbar.full i{background:var(--toxic)}
+.mc .buy{max-width:none;width:100%;justify-content:center;font-size:12px;padding:5px}
+.mc.unk{border-color:var(--tide)}
+.mc.unk img{filter:brightness(0) opacity(.6)}
+.mc.unk .rr{background:var(--tide);color:var(--mist)}
+.packImg{width:190px;height:198px;margin:0 auto;cursor:pointer;animation:packWob 1.4s ease-in-out infinite}
+.packImg.burst{animation:packBurst .38s ease-in forwards}
+@keyframes packWob{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.05)}}
+@keyframes packBurst{to{transform:scale(1.6) rotate(10deg);opacity:0}}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.flip{animation:flipIn .45s ease-out both}
+@keyframes flipIn{from{transform:rotateY(90deg) scale(.7);opacity:0}to{transform:none;opacity:1}}
+.pi{position:relative;background:var(--deep);border:3px solid var(--rc);box-shadow:0 0 18px -4px var(--rc);border-radius:12px;padding:18px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.pi img{width:64px;height:64px}
+.pi .nm{font-size:13px;line-height:1.15}
+.pi .ty{font-size:10px;color:var(--mist)}
+.pi .tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--tide);border:2px solid var(--ink);border-radius:8px;font-size:10px;padding:1px 6px}
+.pi .tag.new{background:var(--toxic);color:var(--ink)}
+.pi .tag.lvl{background:var(--r-leggendario);color:var(--ink)}
+.pi.bonus .big3{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:30px;height:64px}
+.hint.center{text-align:center}
+.found .lvlup{border-color:var(--r-raro);font-family:var(--display);font-size:16px;letter-spacing:.6px;padding:4px 10px}
+@media (prefers-reduced-motion:reduce){.packImg,.flip{animation:none}}
+
+.act .rr2{font-size:20px;line-height:1}
+.act.poor{opacity:.5}
+#rerollBtn{display:flex;align-items:center;justify-content:center;gap:6px}
+#rerollBtn[disabled]{opacity:.45}
