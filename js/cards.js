@@ -80,13 +80,15 @@ function itemHTML(it){if(it.kind==='perle')return'<div class="pi bonus" style="-
   const what=it.kind==='emp'?'Dipendente':it.kind==='mon'?'Mostro':'Gestore';
   return'<div class="pi" style="--rc:var('+RAR[it.rar].c+')">'+tag+'<img alt="" src="'+img+'"><span class="nm">'+(it.kind==='emp'?d.full:d.name)+'</span><span class="ty">'+what+' · '+RAR[it.rar].n+'</span></div>'}
 function openPack(tier){if(!save.packs[tier])return;save.packs[tier]--;packItems=rollPack(tier);packShown=0;hideAll();
-  $('packTitle').textContent=PACKS[tier].name;$('packImg').src=ICONS.packBig[tier];$('packImg').hidden=false;$('packImg').classList.remove('burst');$('packGrid').innerHTML='';$('packHint').textContent='Tocca il pacchetto per aprirlo';$('packDone').hidden=true;$('packAgain').hidden=true;$('packTier').value=tier;show('packOv');sfx('card')}
+  $('packTitle').textContent=PACKS[tier].name;$('packImg').src=ICONS.packBig[tier];$('packImg').hidden=false;$('packImg').classList.remove('burst');$('packGrid').innerHTML='';$('packHint').textContent='Tocca il pacchetto per aprirlo';$('packDone').hidden=true;$('packAgain').hidden=true;$('packSkip').hidden=true;$('packTier').value=tier;show('packOv');sfx('card')}
 $('packImg').onclick=()=>{const img=$('packImg');if(img.classList.contains('burst'))return;img.classList.add('burst');sfx('boom');setTimeout(()=>{img.hidden=true;revealNext()},380)};
-function revealNext(){const g=$('packGrid');if(packShown>=packItems.length){$('packHint').textContent='';$('packDone').hidden=false;const t=$('packTier').value;$('packAgain').hidden=!save.packs[t];$('packAgain').textContent='Apri un altro ('+(save.packs[t]||0)+')';return}
+function packEnd(){$('packHint').textContent='';$('packSkip').hidden=true;$('packDone').hidden=false;const t=$('packTier').value;$('packAgain').hidden=!save.packs[t];$('packAgain').textContent='Apri un altro ('+(save.packs[t]||0)+')'}
+function revealNext(){const g=$('packGrid');if(packShown>=packItems.length){packEnd();const t=$('packTier').value;$('packAgain').hidden=!save.packs[t];$('packAgain').textContent='Apri un altro ('+(save.packs[t]||0)+')';return}
   const it=packItems[packShown++];const w=document.createElement('div');w.className='flip';w.innerHTML=itemHTML(it);g.appendChild(w);
   sfx(it.status==='new'||it.rar==='leggendario'||it.rar==='epico'?'unlock':it.kind==='perle'||it.kind==='stars'?'coin':'card');
-  $('packHint').textContent='Tocca per la prossima carta';setTimeout(()=>{},0)}
-$('packOv').addEventListener('click',ev=>{if(ev.target.closest('button')||ev.target.id==='packImg')return;if($('packImg').hidden&&packShown<packItems.length)revealNext()});
+  if(packShown>=packItems.length){packEnd();return}$('packHint').textContent='Tocca per la prossima carta';$('packSkip').hidden=false}
+$('packOv').addEventListener('click',ev=>{if(ev.target.closest('button')||ev.target.id==='packImg')return;if($('packImg').hidden)revealNext()});
+$('packSkip').onclick=()=>{sfx('click');while(packShown<packItems.length)revealNext()};
 $('packDone').onclick=()=>{sfx('click');openColl()};$('packAgain').onclick=()=>{sfx('click');openPack($('packTier').value)};
 /* riepilogo dei premi in fondo alla run */
 function rewardsHTML(){if(!S)return'';let h='';if(S.lvlUps&&S.lvlUps.length)h+='<span class="lvlup">Livello '+S.lvlUps[S.lvlUps.length-1]+' raggiunto!</span>';
