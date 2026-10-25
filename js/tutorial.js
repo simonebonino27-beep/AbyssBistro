@@ -1,46 +1,66 @@
 'use strict';
-/* ===== Abyss Bistro: tutorial nella prima partita + introduzioni alle modalità ===== */
-let tutStep=-1,tutT=0;
+/* ===== Abyss Bistro: tutorial graduale nella prima partita + introduzioni alle modalità =====
+   Ogni passo introduce UNA meccanica e aspetta che il giocatore la usi davvero. */
+let tutStep=-1,tutT=0,tutShown=false;
 const coach=$('coach');
 const tutSlotNear=()=>{const free=WORLD.slots.filter(s=>!s.tower);return free.sort((a,b)=>a.y-b.y)[Math.min(2,free.length-1)]||null};
+const tutCurveSlot=()=>{const free=WORLD.slots.filter(s=>!s.tower);let best=null,bd=1e9;for(const s of free){for(const q of WORLD.paths[0].pts.slice(1,-1)){const d=Math.hypot(s.x-q[0],s.y-q[1]);if(d<bd){bd=d;best=s}}}return best||tutSlotNear()};
+const caveP=()=>{const p=WORLD.paths[0].pts[0];return{x:Math.max(16,Math.min(W-16,p[0])),y:Math.max(16,p[1])}};
+const crab=()=>S.towers.find(t=>t.key==='granchio');
 const TUT=[
-  {text:'Benvenuto all\'Abyss Bistro! Io sono il Polpo Chef. I mostri degli abissi escono da quella grotta e seguono il sentiero fino al mio bancone. Noi li fermiamo prima.',btn:'Avanti',pos:'mid'},
-  {text:'Questo cuore è la vita del bancone. Ogni mostro che arriva al sushi bar te ne toglie un po\'. A zero la run è finita.',btn:'Avanti',pos:'mid',hi:'#hpPill'},
-  {text:'Queste sono le perle: servono per assumere e potenziare. Le guadagni facendo fuori i mostri e finendo le ondate.',btn:'Avanti',pos:'mid',hi:'#perlePill'},
-  {text:'In basso c\'è la tua mano: 4 dipendenti pescati a caso dal tuo mazzo. Tocca il Granchio per vedere cosa sa fare.',pos:'mid',hi:()=>handBtn('granchio'),wait:()=>S.tool==='granchio'},
-  {text:'In alto c\'è la sua scheda: cosa fa, quanto fa male, fin dove arriva e quanto costa. Ora tocca la piazzola indicata dalla freccia.',pos:'bottom',slot:1,wait:()=>S.towers.length>=1},
-  {text:'Il Granchio è in servizio! Ora assumi lo Squalo: morde forte ma solo da vicino, mettilo attaccato al sentiero.',pos:'mid',hi:()=>handBtn('squalo'),slot:1,wait:()=>S.towers.some(t=>t.key==='squalo')},
-  {text:'Sopra la mano vedi chi sta arrivando. Quando sei pronto premi Inizia ondata.',pos:'mid',hi:'#startBtn',allowStart:1,wait:()=>S.mode==='wave'},
-  {text:'I dipendenti attaccano da soli. Se vuoi accelerare premi x2 qui in alto.',pos:'top',auto:7,hi:'#speedBtn',wait:()=>S.mode!=='wave'},
-  {text:'Ondata superata! Dopo ogni ondata scegli una carta: potenziamenti, piatti speciali, dipendenti nuovi o maledizioni, fortissime ma con un prezzo. Toccane una.',pos:'top',cards:1,wait:()=>$('cards').hidden&&S.mode==='build'},
-  {text:'Ti regalo 100 perle. Tocca il Granchio che hai piazzato: puoi potenziarlo fino al livello 3, oppure licenziarlo e riprenderti il 60%.',pos:'top',enter:()=>{S.perle+=100},wait:()=>!!S.sel,towerArrow:1},
-  {text:'Ora premi Potenzia nel riquadro.',pos:'top',hi:'#upBtn',wait:()=>S.towers.some(t=>t.lv>=2),keepSel:1},
-  {text:'Il mio asso nella manica: i piatti trappola. Tocca il pulsante con il piatto, poi tocca un punto del sentiero.',pos:'mid',hi:'#abilityBtn',wait:()=>S.plates.length>=1},
-  {text:'Chi ci passa sopra si ferma a mangiare e prende danni. Ora sai tutto: dopo un paio di ondate arriva il boss del piano, il Re Aragosta. Batti lui e scendi al piano di sotto. Il resto lo scopri giocando!',btn:'Ci penso io!',pos:'mid',allowStart:1},
+  /* --- prima dell'ondata 1: il minimo indispensabile --- */
+  {text:'Benvenuto all\'Abyss Bistro! Io sono il Polpo Chef. Vedi la freccia? Da quella grotta escono i mostri degli abissi.',btn:'Avanti',pos:'mid',point:caveP},
+  {text:'Seguono il sentiero fino al mio sushi bar. Se ci arrivano, mangiano il bancone: il cuore in alto è la sua vita. A zero, si chiude.',btn:'Avanti',pos:'mid',hi:'#hpPill'},
+  {text:'Per fermarli assumo dipendenti. In basso hai 3 carte pescate dal tuo mazzo. Tocca il Granchio sushiman.',pos:'mid',only:'granchio',hi:()=>handBtn('granchio'),wait:()=>S.tool==='granchio'},
+  {text:'In alto c\'è la sua scheda: cosa fa, quanto fa male, fin dove arriva e quanto costa. Ora tocca la piazzola con la freccia.',pos:'bottom',only:'granchio',slot:tutSlotNear,wait:()=>S.towers.length>=1},
+  {text:'Assunto! Guarda la mano: la carta usata è tornata in fondo al mazzo e ne è entrata un\'altra a caso. Funziona sempre così.',btn:'Avanti',pos:'mid',hi:'#shop'},
+  {text:'Sopra la mano c\'è l\'anteprima: arrivano solo pochi ghiozzi scrocconi. Premi Inizia ondata e guarda cosa succede.',pos:'mid',hi:'#startBtn',start:1,wait:()=>S.mode==='wave'},
+  /* --- ondata 1: osservare --- */
+  {text:'Il Granchio lancia nigiri da solo a chi entra nel suo raggio. Tu non devi mirare: devi scegliere dove metterli.',pos:'top',auto:6,wait:()=>S.earned>0&&tutT>3},
+  {text:'Ogni mostro eliminato ti dà perle, le vedi salire in alto. Servono per assumere e potenziare.',pos:'top',hi:'#perlePill',auto:6,wait:()=>S.mode!=='wave'&&tutT>1},
+  /* --- dopo l'ondata 1: carte --- */
+  {text:'Ondata superata! Dopo ogni ondata scegli una carta. Ce ne sono di quattro tipi: potenziamenti, piatti speciali, dipendenti nuovi e maledizioni. Toccane una.',pos:'top',z:1,wait:()=>$('cards').hidden&&S.mode==='build'},
+  /* --- prima dell'ondata 2: secondo dipendente e potenziamento --- */
+  {text:'Arrivano le aringhe: velocissime. Serve rinforzo. Assumi lo Squalo buttafuori: morde forte ma solo da vicino, quindi mettilo vicino a una curva.',pos:'mid',only:'squalo',hi:()=>handBtn('squalo'),slot:tutCurveSlot,enter:()=>{S.perle=Math.max(S.perle,90);if(!S.hand.includes('squalo'))S.hand[0]='squalo'},wait:()=>S.towers.some(t=>t.key==='squalo')},
+  {text:'Ti regalo 60 perle. Tocca il Granchio che hai piazzato.',pos:'top',enter:()=>{S.perle+=60},towerArrow:crab,wait:()=>S.sel&&S.sel.key==='granchio'},
+  {text:'Qui lo potenzi fino al livello 3, oppure lo licenzi e ti riprendi il 60%. Premi Potenzia.',pos:'top',hi:'#upBtn',keep:crab,wait:()=>crab()&&crab().lv>=2},
+  {text:'Più danno e più gittata. Ora premi Inizia ondata. Se ti sembra lento, durante l\'ondata puoi premere x2 in alto.',pos:'mid',hi:'#startBtn',start:1,wait:()=>S.mode==='wave'},
+  {text:'x2 accelera tutto, toccalo di nuovo per tornare normale. Come vuoi tu.',pos:'top',hi:'#speedBtn',auto:7,wait:()=>S.mode!=='wave'&&tutT>1},
+  {text:'Altra carta! Occhio a quelle con scritto Maledizione: sono fortissime, ma ti fanno pagare un prezzo. Scegline una.',pos:'top',z:1,wait:()=>$('cards').hidden&&S.mode==='build'},
+  /* --- prima del boss: trappole, rimescolo, boss --- */
+  {text:'Il mio asso nella manica: i piatti trappola. Tocca il pulsante col piatto, poi tocca un punto del sentiero.',pos:'mid',hi:'#abilityBtn',wait:()=>S.plates.length>=1},
+  {text:'Chi ci passa sopra si ferma a mangiare e prende 45 danni. Ne hai 8 per piano, usali nei punti caldi.',btn:'Avanti',pos:'mid'},
+  {text:'Se la mano non ti piace, questo tasto la cambia per 15 perle. Ricordatelo per dopo.',btn:'Avanti',pos:'mid',hi:'#handBtn'},
+  {text:'Guarda l\'anteprima: arriva il boss del piano, il Re Aragosta. Ogni tanto "boccia" un dipendente e lo blocca per qualche secondo. Ti lascio 80 perle: assumi chi vuoi dalla mano e poi premi Inizia.',pos:'mid',free:1,enter:()=>{S.perle+=80},hi:'#startBtn',start:1,wait:()=>S.mode==='wave'},
+  {text:'Visto lo zzz? Quel dipendente è stato bocciato. Si riprende da solo dopo qualche secondo. Tieni duro!',pos:'top',free:1,trigger:()=>S.towers.some(t=>t.disabled>0)&&!!S.boss,auto:6,wait:()=>S.mode!=='wave'},
+  {text:'BOSS BATTUTO! Hai vinto stelle Michelin e un pacchetto di carte: lo apri dal menu, in Le mie carte. Scegli la carta e scendiamo.',pos:'top',z:1,free:1,wait:()=>$('cards').hidden&&S.mode!=='cards'},
+  {text:'Ogni piano ha regole sue, le leggi qui prima di scendere. Da adesso sei tu lo chef: più piani, buio, boss più cattivi. Buon servizio!',btn:'Ci penso io!',pos:'top',z:1,free:1},
   {text:null}];
 function handBtn(k){const i=S.hand.indexOf(k);return i>=0?$('shop').children[i]:null}
 function clearHi(){document.querySelectorAll('.tutHi').forEach(e=>e.classList.remove('tutHi'))}
-function showStep(){clearHi();const st=TUT[tutStep];S.tutSlot=null;S.tutTower=0;S.tutAllowStart=!!st.allowStart||!!st.auto;
-  if(!st.text){stopCoach(true);return}
-  if(st.enter)st.enter();
-  coach.className='pos-'+(st.pos||'mid');coach.style.zIndex='';
+function coachBox(st){coach.className='pos-'+(st.pos||'mid');coach.style.zIndex=st.z?'7':'';
   coach.innerHTML='<img alt="" src="'+ICONS.m.polpo+'"><div class="cb"><span class="cn">Polpo Chef · '+(tutStep+1)+'/'+(TUT.length-1)+'</span><span class="ct">'+st.text+'</span><div class="crow">'+(st.btn?'<button class="big sm" id="coachNext">'+st.btn+'</button>':'')+'<button class="ghost sm" id="coachSkip">Salta tutorial</button></div></div>';coach.hidden=false;
-  if(st.btn)$('coachNext').onclick=()=>{sfx('click');nextStep()};$('coachSkip').onclick=()=>{sfx('click');stopCoach(false)};tutT=0}
+  if(st.btn)$('coachNext').onclick=()=>{sfx('click');nextStep()};$('coachSkip').onclick=()=>{sfx('click');stopCoach(false)}}
+function showStep(){clearHi();const st=TUT[tutStep];S.tutSlot=null;S.tutTower=null;S.tutPoint=null;tutT=0;tutShown=false;
+  if(!st.text){stopCoach(true);return}
+  S.tutAllowStart=!!st.start||!!st.auto||!!st.trigger;S.tutOnly=st.free?null:(st.only||'-');
+  if(st.enter)st.enter();if(!st.trigger){coachBox(st);tutShown=true}else coach.hidden=true}
 function nextStep(){tutStep++;if(tutStep>=TUT.length)return;showStep()}
-function tutTick(dt){if(!S||!S.tutorial||tutStep<0||tutStep>=TUT.length)return;const st=TUT[tutStep];if(!st.text)return;tutT+=dt;
-  coach.style.zIndex=st.cards&&!$('cards').hidden?'7':'';
-  if(st.slot)S.tutSlot=(S.tool&&S.tool!=='trap')||tutStep===4?tutSlotNear():null;S.tutTower=st.towerArrow?1:0;
-  const tg=S.tutSlot||(st.towerArrow||st.keepSel?S.towers[0]:null);if(tg){const sy=OY+tg.y*SC;coach.className='pos-'+(sy<VH*.5?'bottom':'top')}
+function tutTick(dt){if(!S||!S.tutorial||tutStep<0||tutStep>=TUT.length)return;const st=TUT[tutStep];if(!st.text)return;
+  if(st.trigger&&!tutShown){if(st.trigger()){coachBox(st);tutShown=true;tutT=0}else{if(st.wait&&st.wait())nextStep();return}}
+  tutT+=dt;
+  S.tutSlot=st.slot&&(S.tool&&S.tool!=='trap'||!st.only)?st.slot():null;S.tutTower=st.towerArrow&&!S.sel?st.towerArrow():null;S.tutPoint=st.point?st.point():null;
+  const tg=S.tutSlot||S.tutTower||(st.keep&&st.keep());if(tg&&!st.z){const sy=OY+tg.y*SC;coach.className='pos-'+(sy<VH*.5?'bottom':'top')}
   const h=typeof st.hi==='function'?st.hi():st.hi?document.querySelector(st.hi):null;if(h&&!h.classList.contains('tutHi')){clearHi();h.classList.add('tutHi')}
-  if(st.keepSel&&!S.sel&&S.towers[0]&&!S.towers.some(t=>t.lv>=2))openTower(S.towers[0]);
-  if(st.wait&&st.wait())nextStep();else if(st.auto&&tutT>st.auto)nextStep()}
+  if(st.keep){const t=st.keep();if(t&&!S.sel&&t.lv<2)openTower(t)}
+  if(st.wait&&st.wait())nextStep();else if(st.auto&&tutT>st.auto&&!st.wait)nextStep()}
 /* la prima run corta, con il Polpo Chef come guida */
 function startTutorial(){save.asked=1;save.novice=1;writeSave();hideAll();shopKey='';tutStep=-1;
   const deck=['granchio','squalo','rana','sardine','polipetto'].filter(k=>save.emp[k]);
   startDefense('short','polpo',deck);S.tutorial=true;S.floors[0]=0;S.depth=0;loadFloor(0);for(const s of WORLD.slots)s.tower=null;
-  S.hand=['granchio','squalo','rana','sardine'];S.pile=shuffle(deck.slice());floorIntro()}
-function stopCoach(done){clearHi();coach.hidden=true;tutStep=-1;if(S){S.tutorial=false;S.tutSlot=null;S.tutTower=0}
-  save.asked=1;if(done&&!save.tutDone){save.tutDone=1;save.perle+=100;toast('Tutorial completato: +100 perle nel Bistrot')}else if(!done)save.tutDone=1;writeSave()}
+  S.hand=['granchio','squalo','rana'];S.pile=shuffle(deck.filter(k=>!S.hand.includes(k)));floorIntro()}
+function stopCoach(done){clearHi();coach.hidden=true;tutStep=-1;if(S){S.tutorial=false;S.tutSlot=null;S.tutTower=null;S.tutPoint=null;S.tutOnly=null}
+  save.asked=1;if(done==='lost'){writeSave();return}if(done&&!save.tutDone){save.tutDone=1;save.perle+=100;toast('Tutorial completato: +100 perle nel Bistrot')}else if(!done)save.tutDone=1;writeSave()}
 /* domanda alla prima apertura */
 function maybeAsk(){if(save.asked)return;show('askOv')}
 $('askYes').onclick=()=>{sfx('click');save.asked=1;save.tutDone=1;writeSave();show('askOv',false);toast('Allora buon servizio! Il tutorial resta in Come si gioca')};

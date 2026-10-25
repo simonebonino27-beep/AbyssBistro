@@ -4,7 +4,7 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 
 **Gioca:** https://simonebonino27-beep.github.io/AbyssBistro/
 
-## Cosa c'è (v4, gioco completo da bilanciare)
+## Cosa c'è (v5, gioco completo da bilanciare)
 
 ### Modalità
 - **Run corta**: 3 piani (2 a caso + l'Abisso), 3 ondate e un boss per piano.
@@ -18,7 +18,7 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 - **14 nemici** con abilità: corazza, volo, furti, divisione, invisibilità, aura che rallenta, corazza frontale, nausea, spegni-luce, carica, travestimento.
 - **6 boss**: Re Aragosta, Granchio reale, Kraken, Pesce lanterna gigante, Leviatano, Megalodonte. Battuti diventano mostri leggendari per la modalità Mostro affamato.
 - **6 piani** con regole proprie: Barriera corallina, Foresta di kelp (le alghe nascondono i nemici), Relitto (due corsie che si incrociano), Fossa buia (buio: serve la Rana faro), Camini vulcanici (eruzioni), Abisso (buio quasi totale).
-- **Mazzo**: scegli 4-8 dipendenti, in partita ne hai 4 in mano in ordine casuale. Le carte dopo ogni ondata possono farti trovare dipendenti nuovi.
+- **Mazzo**: scegli 4-8 dipendenti, in partita ne hai 3 in mano: quella che usi torna in fondo al mazzo e ne entra un'altra a caso. Puoi cambiare la mano pagando perle (o fame, da mostro). Le carte dopo ogni ondata possono farti trovare dipendenti nuovi.
 - **Carte** con rarità (comune → leggendario), battuta ed effetto in numeri: potenziamenti, maledizioni, piatti speciali.
 
 ### Progressione (Il Bistrot)
@@ -31,10 +31,23 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 - I doppioni diventano copie: raggiunte quelle richieste puoi pagare il potenziamento in perle.
 - Rimescolo a pagamento delle carte dopo le ondate e della mano di dipendenti.
 
+### PvP (a codice, niente server)
+Ogni sfida è un codice `ABX-...` da mandare in chat; l'amico lo incolla in **PvP** e gioca.
+- **Chef contro Chef**: stesso piano, stesse ondate e stesse carte decisi dal codice. Vince chi fa più punti.
+- **Mostro contro Mostro**: stessa cucina da divorare con gli stessi mostri. Vince chi fa più danni.
+- **Chef contro Mostro**: costruisci una cucina con 1000 perle, l'amico la attacca da mostro.
+- **Mostro contro Chef**: prepari un'orda con 600 di fame, l'amico si difende in 3 ondate.
+- **Classifica amici** della sfida del giorno: a fine sfida esce un codice col punteggio, chi lo incolla ti vede in classifica.
+- Lista amici con duelli vinti e persi.
+
+### Posta
+- Premi di accesso giornaliero su 7 giorni (perle, stelle, pacchetti; il settimo giorno un Forziere), con serie di accessi.
+- Regalo di benvenuto e novità.
+
 ### Tutorial
 - Alla prima apertura il gioco chiede se conosci già i tower defense: se rispondi no, il Polpo Chef ti guida passo per passo nella tua prima run vera.
 - La prima volta che apri Run lunga, Infinita, Mostro affamato o la Sfida del giorno compare una scheda che spiega la modalità.
-- Il tutorial si può rifare da Come si gioca.
+- Il tutorial è graduale: fa fare a te ogni mossa (assumere, potenziare, scegliere carte, trappole, cambiare mano) e si può rifare da Come si gioca.
 
 ### Altro
 - Pausa, volume separato di musica ed effetti, velocità x2.
@@ -58,6 +71,9 @@ js/art.js         disegni di tutti i personaggi
 js/world.js       piani, percorsi, fondali, luce e buio
 js/game.js        simulazione della partita e disegno
 js/ui.js          menu, Bistrot, schermate, ciclo principale
+js/cards.js       collezione, copie, pacchetti, livello giocatore
+js/tutorial.js    tutorial guidato e intro delle modalità
+js/social.js      PvP a codice, classifica amici, posta
 manifest.json     dati dell'app installabile
 sw.js             funzionamento offline
 icons/            icone dell'app

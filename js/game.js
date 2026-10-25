@@ -4,12 +4,12 @@ let S=null;
 function newRun(kind,run,o={}){const r=save.resto;
   const s={kind,run,mode:'build',hp:20+3*r.hp,perle:120+25*r.cash,earned:0,stars:0,found:[],
     floors:[],fi:0,depth:0,wave:0,total:0,hpMul:1,
-    mgr:o.mgr||'polpo',deck:(o.deck||[]).slice(),pile:[],hand:[null,null,null,null],
+    mgr:o.mgr||'polpo',deck:(o.deck||[]).slice(),pile:[],hand:[null,null,null],
     towers:[],enemies:[],shots:[],fx:[],plates:[],clouds:[],traps:0,wasabi:0,freeze:0,freezeT:0,
     mods:{dmg:{},all:1,range:1,rate:1,chain:0,perle:1,enemySpeed:1,upDisc:1,hireDisc:1,drain:0,count:1,light:1,curse:1},
     rerolls:[0,1,1,2][r.cards],cardN:r.cards>=2?4:3,
     queue:[],spawnT:0,spawnAlt:0,speed:1,tool:null,sel:null,selSlot:null,hover:null,boss:null,shake:0,blackout:0,floorHit:false,torpT:3,lights:[],
-    mdeck:(o.mdeck||[]).slice(),mpile:[],mhand:[null,null,null,null],hunger:50,hungerMax:100,lane:0,timer:0,round:0,baseHp:0,baseMax:0,dealt:0,
+    mdeck:(o.mdeck||[]).slice(),mpile:[],mhand:[null,null,null],hunger:50,hungerMax:100,lane:0,timer:0,round:0,baseHp:0,baseMax:0,dealt:0,
     mm:{regen:1,hp:1,speed:1,cost:1,bite:1},ai:{rate:1,budget:0,income:0,t:0,startCut:1,dmg:1}};
   for(const k of TOWER_KEYS)s.mods.dmg[k]=1;
   if(s.mgr==='narvalo')s.mods.curse=1.5;
@@ -17,32 +17,38 @@ function newRun(kind,run,o={}){const r=save.resto;
   return s}
 
 /* ---------- difesa: flusso della run ---------- */
-const wavesPer=()=>S.run==='short'?3:S.run==='long'?5:4;
-const isBossWave=()=>S.run==='inf'?(S.total+1)%5===0:S.wave>=wavesPer();
+const wavesPer=()=>S.tutorial?2:S.run==='duel'?4:S.army?3:S.run==='short'?3:S.run==='long'?5:4;
+const isBossWave=()=>S.army?false:S.run==='inf'?(S.total+1)%5===0:S.wave>=wavesPer();
 const curFloorIdx=()=>S.run==='inf'?Math.floor(S.total/5)%6:S.floors[S.fi];
-function drawCard(){if(!S.pile.length)S.pile=shuffle(S.deck.slice());return S.pile.shift()}
+/* mano da 3: la carta usata torna in fondo al mazzo, ne entra un'altra a caso (mai quella appena rimessa, se c'è scelta) */
+function drawFrom(pile,deck,hand){if(!pile.length){const rest=deck.filter(k=>!hand.includes(k));pile.push(...shuffle(rest.length?rest:deck.slice()))}const n=pile.length>1?pile.length-1:1;return pile.splice(Math.floor(rnd()*n),1)[0]}
+function drawCard(){return drawFrom(S.pile,S.deck,S.hand)}
+function useCard(i){const k=S.hand[i];S.hand[i]=null;S.pile.push(k);S.hand[i]=drawCard()}
 function startDefense(run,mgr,deck,daily){S=newRun('def',run,{mgr,deck});if(daily){S.daily=daily.key;daily.curse.apply(S)}
   if(run==='short'){S.floors=[pick([0,0,1]),pick([2,3,4]),5]}else if(run==='long')S.floors=[0,1,2,3,4,5];else S.floors=[0];
-  S.pile=shuffle(S.deck.slice());for(let i=0;i<4;i++)S.hand[i]=drawCard();enterFloor(0)}
+  S.pile=shuffle(S.deck.slice());for(let i=0;i<3;i++)S.hand[i]=drawCard();enterFloor(0)}
 function enterFloor(i){S.fi=i;const fi=curFloorIdx();S.depth=S.run==='inf'?Math.min(5,Math.floor(S.total/5)):fi;loadFloor(fi);
   for(const s of WORLD.slots)s.tower=null;S.towers=[];S.enemies=[];S.shots=[];S.plates=[];S.clouds=[];S.traps=S.mgr==='polpo'?8:0;
   S.wave=0;S.floorHit=false;S.boss=null;S.blackout=0;S.mode='intro';musicMode=0;ui.floorIntro()}
 function genWave(){const boss=isBossWave(),depth=S.depth,w=S.run==='inf'?S.total:S.wave,q=[];
+  if(S.army)return armyWave(w);
+  if(S.tutorial){const add=(t,n,g)=>{for(let k=0;k<n;k++)q.push([t,g])};if(boss){add('ghiozzo',4,1.4);q.push([WORLD.floor.boss,2])}else if(w===0)add('ghiozzo',5,1.7);else{add('ghiozzo',3,1.3);add('aringa',6,.45)}return q}
   let pool=poolFor(depth);if(depth===0&&w===0)pool=['ghiozzo'];else if(depth===0&&w===1)pool=['ghiozzo','aringa'];
   const fresh=POOL[Math.min(depth,4)].filter(k=>pool.includes(k));
-  const diff=S.run==='short'?S.fi*1.8:S.run==='long'?S.fi:depth;let n=Math.round((7+w*2.2+diff*2.3)*S.mods.count);if(boss)n=Math.round(n*.6);
-  for(let k=0;k<n;k++){let t=null;if(fresh.length&&depth>0&&Math.random()<.35)t=pick(fresh);
-    else{const tot=pool.reduce((a,p)=>a+RAR[ENEMIES[p].rar].w,0);let x=Math.random()*tot;for(const p of pool){x-=RAR[ENEMIES[p].rar].w;if(x<=0){t=p;break}}}
+  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi:depth;let n=Math.round((7+w*2.2+diff*2.3)*S.mods.count);if(boss)n=Math.round(n*.6);
+  for(let k=0;k<n;k++){let t=null;if(fresh.length&&depth>0&&rnd()<.35)t=pick(fresh);
+    else{const tot=pool.reduce((a,p)=>a+RAR[ENEMIES[p].rar].w,0);let x=rnd()*tot;for(const p of pool){x-=RAR[ENEMIES[p].rar].w;if(x<=0){t=p;break}}}
     t=t||'ghiozzo';const e=ENEMIES[t];if(e.group)for(let g=0;g<e.group;g++)q.push([t,g<e.group-1?.28:.7]);else q.push([t,e.hp>=140?1.5:Math.max(.5,1.05-w*.03)])}
   if(boss)q.splice(Math.min(4,q.length),0,[WORLD.floor.boss,3]);return q}
-const bossMul=()=>(S.run==='short'?(S.fi===0?.65:.85):1)*(S.run==='inf'?1+Math.floor(S.total/6)*.6:1);
+const bossMul=()=>(S.tutorial?.45:1)*(S.run==='short'||S.run==='duel'?(S.fi===0?.65:.85):1)*(S.run==='inf'?1+Math.floor(S.total/6)*.6:1);
 function prepWave(){S.nextQ=genWave()}
-function startWave(){if(S.mode!=='build')return;if(S.tutorial&&!S.tutAllowStart){toast('Segui il Polpo Chef: prima assumi i dipendenti');return}S.queue=S.nextQ||genWave();S.nextQ=null;if(S.mgr==='polpo'||Math.random()<.5)toast(pick(isBossWave()?BOSS_LINES:CHEF_LINES));const w=S.run==='inf'?S.total:S.wave;
-  const diff=S.run==='short'?S.fi*1.8:S.run==='long'?S.fi:S.depth;S.hpMul=(1+.13*w)*(1+.3*diff)*(S.run==='inf'?1+Math.max(0,S.total-8)*.06:1);S.spawnT=.3;S.spawnAlt=0;S.mode='wave';
+function startWave(){if(S.mode!=='build')return;if(S.tutorial&&!S.tutAllowStart){toast('Segui il Polpo Chef: prima assumi i dipendenti');return}S.queue=S.nextQ||genWave();S.nextQ=null;if(S.mgr==='polpo'||Math.random()<.5)toast(cpick(isBossWave()?BOSS_LINES:CHEF_LINES));const w=S.run==='inf'?S.total:S.wave;
+  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi:S.depth;S.hpMul=(1+.13*w)*(1+.3*diff)*(S.run==='inf'?1+Math.max(0,S.total-8)*.06:1);S.spawnT=.3;S.spawnAlt=0;S.mode='wave';
   if(S.mods.drain){S.hp=Math.max(1,S.hp-S.mods.drain);text(180,455,'-'+S.mods.drain+' chef posseduto','#ff4f5e',1.4)}}
 function waveClear(){const boss=isBossWave();
   for(const t of S.towers)if(t.key==='ostrica'){if(t.robbed){t.robbed=0;text(t.x,t.y-24,'Derubata!','#ff4f5e',1.2)}else{const g=30+12*(t.lv-1);S.perle+=g;S.earned+=g;text(t.x,t.y-24,'+'+g,'#f1dca2',1.2);t.anim=1}}
-  const bonus=25+Math.min(S.total,12)*8;S.perle+=bonus;S.earned+=bonus;S.total++;if(!S.tutorial||true)addXP(boss?60:12);
+  const bonus=25+Math.min(S.total,12)*8;S.perle+=bonus;S.earned+=bonus;S.total++;
+  if(S.army&&S.wave>=wavesPer()-1){endRun(true);return}if(!S.tutorial||true)addXP(boss?60:12);
   if(boss){const st=1+(S.floorHit?0:1);S.stars+=st;save.stars+=st;const bk=WORLD.floor.boss;
     if(!save.bossBeat[bk]){save.bossBeat[bk]=1;if(!save.mon[bk])save.mon[bk]=1;S.found.push(bk)}save.maxFloor=Math.max(save.maxFloor,WORLD.fi);
     for(const m of MANAGER_KEYS){const u=MANAGERS[m].unlock;if(save.mgr[m])continue;if((u.type==='boss'&&save.bossBeat[u.boss])||(u.type==='floor'&&save.maxFloor>=u.floor)){save.mgr[m]=1;S.found.push('mgr:'+m)}}
@@ -56,36 +62,36 @@ function afterCards(){if(S.kind==='mon'){enterMonsterFloor(S.fi+1);return}
   S.mode='build';prepWave()}
 
 /* ---------- mostro affamato ---------- */
-function drawMon(){if(!S.mpile.length)S.mpile=shuffle(S.mdeck.slice());return S.mpile.shift()}
-function startMonster(mdeck){S=newRun('mon','monster',{mdeck});S.floors=shuffle([0,1,2,3,4,5]).slice(0,3);S.mpile=shuffle(S.mdeck.slice());for(let i=0;i<4;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
+function drawMon(){return drawFrom(S.mpile,S.mdeck,S.mhand)}
+function startMonster(mdeck){S=newRun('mon','monster',{mdeck});S.floors=shuffle([0,1,2,3,4,5]).slice(0,3);S.mpile=shuffle(S.mdeck.slice());for(let i=0;i<3;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
 function enterMonsterFloor(i){if(i>=S.floors.length){endRun(true);return}S.fi=i;S.round=i;const fi=S.floors[i];S.depth=fi;loadFloor(fi);
   for(const s of WORLD.slots)s.tower=null;S.towers=[];S.enemies=[];S.shots=[];S.clouds=[];S.plates=[];S.boss=null;S.blackout=0;
   S.baseMax=S.baseHp=20+i*10;S.hunger=Math.min(S.hungerMax,50);S.timer=150;S.lane=0;
   S.ai.budget=Math.round((130+i*110+fi*25)*S.ai.startCut);S.ai.income=3.2+i*1.8+fi*.6;S.ai.dmg=.75+i*.2+fi*.08;S.ai.t=4;
-  aiThink(true);S.mode='intro';musicMode=0;ui.floorIntro()}
+  aiThink(true);if(S.kitAtk&&typeof placeKit==='function')placeKit(S.kitAtk);S.mode='intro';musicMode=0;ui.floorIntro()}
 const monCost=k=>Math.round(ENEMIES[k].mcost*S.mm.cost);
 function playMon(i){const k=S.mhand[i];if(!k||S.mode!=='mplay')return;const c=monCost(k);if(S.hunger<c){sfx('nope');toast('Serve più fame: '+c);return}
   S.hunger-=c;const d=ENEMIES[k],lvl=save.mon[k]||1,hpMul=2.2*S.mm.hp*(1+.12*(lvl-1))*(1+S.round*.18);
-  for(let g=0;g<(d.group||1);g++)spawnEnemy(k,{path:S.lane,pd:-g*14,hpMul,spMul:1.3,bite:S.mm.bite});sfx('spawn');S.mhand[i]=drawMon()}
+  for(let g=0;g<(d.group||1);g++)spawnEnemy(k,{path:S.lane,pd:-g*14,hpMul,spMul:1.3,bite:S.mm.bite});sfx('spawn');S.mhand[i]=null;S.mpile.push(k);S.mhand[i]=drawMon()}
 function aiThink(force){const free=WORLD.slots.filter(s=>!s.tower),dk=WORLD.floor.dark,hasRana=S.towers.some(t=>t.key==='rana');
-  if(free.length&&(force||!S.towers.length||Math.random()<.62)){
+  if(free.length&&(force||!S.towers.length||rnd()<.62)){
     let keys=TOWER_KEYS.filter(k=>TOWERS[k].cost<=S.ai.budget&&k!=='ostrica');if(!keys.length)return;
     if(dk>=.3&&!hasRana&&keys.includes('rana'))keys=['rana'];else keys=keys.filter(k=>TOWERS[k].dmg>0).concat(keys);
     const k=pick(keys),slot=pick(free.slice(0,Math.max(3,Math.ceil(free.length*.7))));
     S.ai.budget-=TOWERS[k].cost;const t=makeTower(k,slot);t.spent=TOWERS[k].cost;fx({k:'ring',x:t.x,y:t.y,r:24,dur:.35,col:'#f1dca2'})}
   else{const up=S.towers.filter(t=>t.lv<3&&TOWERS[t.key].cost*.75*t.lv<=S.ai.budget);if(up.length){const t=pick(up);S.ai.budget-=TOWERS[t.key].cost*.75*t.lv;t.lv++;fx({k:'ring',x:t.x,y:t.y,r:26,dur:.4,col:'#e8c14a'})}}}
 function updMonster(dt){S.hunger=Math.min(S.hungerMax,S.hunger+9*S.mm.regen*dt);S.timer-=dt;S.ai.budget+=S.ai.income*dt;S.ai.t-=dt;
-  if(S.ai.t<=0){S.ai.t=Math.max(2.4,3.8-S.round*.5);aiThink()}
+  if(S.noAI){S.ai.income=0}else if(S.ai.t<=0){S.ai.t=Math.max(2.4,3.8-S.round*.5);aiThink()}
   if(S.baseHp<=0){S.baseHp=0;S.mode='cards';sfx('win');S.earned+=80;addXP(45);awardPack(['comune','raro','epico'][Math.min(2,S.fi)],'round vinto');if(S.fi>=S.floors.length-1){endRun(true);return}ui.showCards(80,false);return}
   if(S.timer<=0){S.timer=0;endRun(false)}}
 
 /* ---------- entità ---------- */
 function spawnEnemy(type,o={}){const d=ENEMIES[type];const np=WORLD.paths.length;const pi=o.path!=null?o.path%np:(S.spawnAlt++)%np;const path=WORLD.paths[pi];
   const hp=d.hp*(o.hpMul||1);const e={type,d,hp,max:hp,speed:d.speed*(o.spMul||1),reward:d.reward,dmg:d.dmg,r:d.r,path,pd:o.pd||0,x:0,y:0,face:1,dirx:1,diry:0,slow:0,stun:0,hitT:0,conf:0,
-    abT:d.boss?4:5,dash:0,dashT:3+Math.random()*2,grow:1,disg:type==='rivale',stole:0,seen:new Set(),bite:o.bite||1};
+    abT:d.boss?4:5,dash:0,dashT:3+rnd()*2,grow:1,disg:type==='rivale',stole:0,seen:new Set(),bite:o.bite||1};
   const p=path.at(e.pd);e.x=p.x;e.y=p.y;S.enemies.push(e);if(S.kind==='def'&&!save.seen[type])save.seen[type]=1;
   if(d.boss){S.boss=e;sfx('boss');musicMode=1;S.shake=.4;toast(d.name+' · '+d.title)}return e}
-function makeTower(key,slot){const t={key,d:TOWERS[key],x:slot.x,y:slot.y,lv:1,cd:.3,spent:0,disabled:0,nausea:0,doused:0,shield:0,face:1,anim:0,slot,mode:0,moveT:16,pa:Math.random()*TAU,hitCd:0,robbed:0};
+function makeTower(key,slot){const t={key,d:TOWERS[key],x:slot.x,y:slot.y,lv:1,cd:.3,spent:0,disabled:0,nausea:0,doused:0,shield:0,face:1,anim:0,slot,mode:0,moveT:16,pa:rnd()*TAU,hitCd:0,robbed:0};
   if(key==='sardine')t.fish=Array.from({length:7},(_,i)=>({x:slot.x,y:slot.y-8,a:i}));slot.tower=t;S.towers.push(t);return t}
 const tLvlMeta=k=>S.kind==='def'?1+.1*((save.emp[k]||1)-1):1;
 const tRange=t=>t.d.range*(1+.08*(t.lv-1))*(S.kind==='def'?S.mods.range*(t.key==='rana'?S.mods.light:1):1);
@@ -120,10 +126,10 @@ function hurt(e,dmg,o={}){if(e.dead)return;let d=dmg;
   if(e.d.armor&&!o.boom)d*=.35;
   if(e.type==='riccio'&&o.src){const vx=o.src.x-e.x,vy=o.src.y-e.y,l=Math.hypot(vx,vy)||1;if((e.dirx*vx+e.diry*vy)/l>.35)d*=.3}
   if(S.lights.length&&inLight(e.x,e.y,true))d*=1.15;
-  if(S.kind==='def'&&S.mgr==='squalo'&&o.src&&Math.random()<.15){d*=2.5;text(e.x,e.y-e.r-14,'CRIT!','#e8c14a',.7)}
+  if(S.kind==='def'&&S.mgr==='squalo'&&o.src&&rnd()<.15){d*=2.5;text(e.x,e.y-e.r-14,'CRIT!','#e8c14a',.7)}
   e.hp-=d;e.hitT=.12;
   if(o.src&&o.src.key&&T-(e.lastFx||0)>.09){e.lastFx=T;const col=HITCOL[o.src.key]||'#fff';fx({k:'hit',x:e.x+(Math.random()-.5)*6,y:e.y-4+(Math.random()-.5)*6,dur:.22,col,big:d>=20});
-    if(d>=24&&Math.random()<.35)fx({k:'pow',x:e.x,y:e.y-e.r-6,dur:.5,s:pick(POW),col})}
+    if(d>=24&&Math.random()<.35)fx({k:'pow',x:e.x,y:e.y-e.r-6,dur:.5,s:cpick(POW),col})}
   if(e.hp<=0)kill(e)}
 const HITCOL={granchio:'#ff8a5c',squalo:'#ffffff',spada:'#d8ecff',medusa:'#f7e35a',gamberetto:'#9ef7ff',palla:'#f2d54a',calamaro:'#b48ad8',tartaruga:'#b8e04a',sardine:'#c3d2d8',polipetto:'#ffb04a',manta:'#8fc6ea',paguro:'#f1dca2',balena:'#9fd6e8'};
 const POW=['POW!','SBAM!','CRUNCH!','ZAC!','GNAM!','BONK!','SPLAT!'];
@@ -132,7 +138,7 @@ function kill(e){e.dead=true;
   fx({k:'splat',x:e.x,y:e.y,dur:.45,r:e.r});
   if(e.type==='stella'){const pi=WORLD.paths.indexOf(e.path);for(let k=0;k<5;k++)spawnEnemy('stellina',{path:pi,pd:Math.max(0,e.pd-8+k*4),hpMul:S.kind==='def'?S.hpMul:S.mm.hp})}
   if(e===S.boss){S.boss=null;musicMode=0;sfx('boom');S.shake=.5;fx({k:'ring',x:e.x,y:e.y,r:70,dur:.6,col:'#e8c14a',light:1});
-    if(S.kind==='def')text(e.x,e.y-30,pick(['Recensione: 5 stelle!','Servito!','Fuori dal menu!','Conto pagato!']),'#e8c14a',1.8)}}
+    if(S.kind==='def')text(e.x,e.y-30,cpick(['Recensione: 5 stelle!','Servito!','Fuori dal menu!','Conto pagato!']),'#e8c14a',1.8)}}
 function reachBase(e){if(S.kind==='def'){S.hp-=e.dmg;S.floorHit=true;S.shake=.3;sfx('hurt');text(180,462,'-'+e.dmg,'#ff4f5e',1)}
   else{const d=Math.round((e.d.boss?12:e.dmg*3)*S.mm.bite);S.baseHp-=d;S.dealt+=d;S.shake=.25;sfx('bite');text(180,462,'-'+d,'#b8e04a',1)}
   if(e===S.boss){S.boss=null;musicMode=0}}
@@ -199,8 +205,8 @@ function updTower(t,dt){t.anim=Math.max(0,t.anim-dt);t.atk=Math.max(0,(t.atk||0)
     case'ink':sfx('ink');S.clouds.push({x:tg.x,y:tg.y,r:40,t:3.2,id:Math.random()});break;
     case'hold':{const h=list.find(e=>!e.d.fly&&!e.d.boss);if(!h){t.cd=.4;return}h.stun=Math.max(h.stun,1.6);hurt(h,D,{src:t});t.anim=.5;text(h.x,h.y-h.r-10,'Assaggia!','#f1dca2',.7);sfx('bite');break}
     case'gulp':t.anim=.9;sfx('gulp');S.shake=.3;fx({k:'ring',x:t.x,y:t.y,r:R,dur:.6,col:'#9fd6e8'});text(t.x,t.y-34,'GLOM!','#9fd6e8',1);for(const e of list)hurt(e,e.d.boss?D*.3:D,{src:t,boom:1});break;
-    case'random':{const r=Math.random();
-      if(r<.45){S.shots.push({x:t.x,y:t.y-14,tg,dmg:6+Math.random()*26,src:t,a:0});sfx('throw')}
+    case'random':{const r=rnd();
+      if(r<.45){S.shots.push({x:t.x,y:t.y-14,tg,dmg:6+rnd()*26,src:t,a:0});sfx('throw')}
       else if(r<.6){tg.stun=Math.max(tg.stun,tg.d.boss?.3:1.2);text(tg.x,tg.y-tg.r-10,'Inciampa!','#f1dca2',.8)}
       else if(r<.74){if(S.kind==='def'){S.perle+=4;S.earned+=4}text(t.x,t.y-24,'Mancia +4','#f1dca2',.8)}
       else if(r<.84){tg.hp=Math.min(tg.max,tg.hp+10);text(t.x,t.y-24,'Ops!','#ff4f5e',.8)}
@@ -229,7 +235,7 @@ function update(dt){
   if(S.kind==='def'&&S.mgr==='nonno'&&S.mode==='wave'){S.torpT-=dt;if(S.torpT<=0){S.torpT=6;const tg=S.enemies.filter(e=>!e.disg).sort((a,b)=>prog(b)-prog(a))[0];if(tg){S.shots.push({x:292,y:476,tg,dmg:80*(1+.3*S.depth),torp:1,a:0});sfx('shot')}}}
   if(S.kind==='def'){if(S.hp<=0){S.hp=0;endRun(false);return}if(S.mode==='wave'&&!S.queue.length&&!S.enemies.length)waveClear()}}
 
-function endRun(win){if(S.mode==='end')return;if(S.tutorial&&typeof stopCoach==='function')stopCoach();S.mode='end';musicMode=0;sfx(win?'win':'lose');
+function endRun(win){if(S.mode==='end')return;if(!S.tutorial&&typeof socialEnd==='function')socialEnd(win);if(S.tutorial&&typeof stopCoach==='function'){stopCoach(win?true:'lost');if(!win)setTimeout(()=>toast('Niente paura: la prossima Run corta riparte con il Polpo Chef'),400)}S.mode='end';musicMode=0;sfx(win?'win':'lose');
   let earned=S.kind==='mon'?Math.round(S.dealt*3+S.earned+(win?200:0)):Math.round(S.earned*.35+(win?150:0));if(S.daily&&win&&save.dailyDone!==S.daily){earned*=2;save.stars+=3;save.dailyDone=S.daily;S.dailyWon=1}save.perle+=earned;save.runs++;if(win)save.wins++;
   const score=S.kind==='mon'?S.round+(win?1:0):S.run==='inf'?S.total:S.fi+(win?1:0);save.best[S.run]=Math.max(save.best[S.run]||0,score);writeSave();ui.showEnd(win,earned)}
 function quitRun(){if(S&&S.mode!=='end'&&S.mode!=='menu'){const earned=S.kind==='mon'?Math.round(S.dealt*3+S.earned):Math.round(S.earned*.35);if(earned>0){save.perle+=earned;writeSave()}}}
@@ -290,7 +296,7 @@ function render(){const c=ctx;c.setTransform(DPR,0,0,DPR,0,0);
   for(const f of S.fx)if(f.k==='tentacle')drawTentacle(c,f.x+10,f.y+2,1,T);
   drawBase(c);
   if(S.tutorial){const arrow=(x,y)=>{const b=Math.sin(T*6)*5;c.save();c.translate(x,y-46+b);P(c,[-9,-14,9,-14,9,0,16,0,0,16,-16,0,-9,0]);FS(c,'#f1dca2',2.4);c.restore();E(c,x,y-1,22,11);c.strokeStyle='rgba(241,220,162,'+(.5+.4*Math.sin(T*8))+')';c.lineWidth=3;c.stroke()};
-    if(S.tutSlot)arrow(S.tutSlot.x,S.tutSlot.y);if(S.tutTower&&S.towers[0]&&!S.sel)arrow(S.towers[0].x,S.towers[0].y-14)}
+    if(S.tutSlot)arrow(S.tutSlot.x,S.tutSlot.y);if(S.tutTower)arrow(S.tutTower.x,S.tutTower.y-14);if(S.tutPoint)arrow(S.tutPoint.x,S.tutPoint.y+8)}
   for(const b of snow){c.beginPath();c.arc(b.x,b.y,b.r,0,TAU);if(b.b){c.strokeStyle='rgba(230,250,240,.45)';c.lineWidth=1;c.stroke()}else{c.fillStyle=WORLD.floor.dark>.3?'rgba(160,240,255,.5)':'rgba(230,240,220,.4)';c.fill()}}
   drawManta(c);
   if(S.mode!=='menu'){computeLightsIfIdle();drawDarkness(c,darkLvl(),S.lights)}else drawDarkness(c,WORLD.floor.dark*.7,[{x:180,y:478,r:140}]);

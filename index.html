@@ -41,7 +41,7 @@
       <button class="act" id="abilityBtn"><img alt="" id="abilityIco"><span id="abilityLbl">Trappole</span></button>
       <button class="act" id="wasabiBtn" hidden><img alt="" id="wasabiIco"><span id="wasabiCnt">0</span></button>
       <button class="act" id="freezeBtn" hidden><img alt="" id="freezeIco"><span id="freezeCnt">0</span></button>
-      <button class="act" id="handBtn" title="Cambia i 4 dipendenti in mano" aria-label="Rimescola la mano per 15 perle"><span class="rr2">&#x21bb;</span><span>15</span></button>
+      <button class="act" id="handBtn" title="Cambia le 3 carte in mano" aria-label="Cambia mano"><span class="rr2">&#x21bb;</span><span class="hb"><b>Cambia mano</b><span id="handCost">15 perle</span></span></button>
       <button class="act" id="laneBtn" hidden><span id="laneLbl">Corsia A</span></button>
       <button id="startBtn">Inizia ondata 1</button>
     </div>
@@ -49,7 +49,7 @@
 
   <div class="overlay" id="menu">
     <div class="sheet wide menuSheet">
-      <div class="mTop"><div class="wallet sm"><span><span class="pearl"></span><b id="mPerle">0</b></span><span><span class="starI"></span><b id="mStars">0</b></span></div><button class="ghost slim" id="settingsBtn">Impostazioni</button></div>
+      <div class="mTop"><div class="wallet sm"><span><span class="pearl"></span><b id="mPerle">0</b></span><span><span class="starI"></span><b id="mStars">0</b></span></div><div class="mBtns"><button class="ghost slim mailB" id="mailBtn">Posta<span class="badge" id="mailBadge" hidden>0</span></button><button class="ghost slim" id="settingsBtn">Impostazioni</button></div></div>
       <canvas id="menuArt" width="680" height="300" aria-hidden="true"></canvas>
       <h1>Abyss Bistro</h1>
       <p class="tagline">Tower defense roguelike · Il sushi più pericoloso degli abissi</p>
@@ -59,6 +59,7 @@
       <div class="modes" id="modeList"></div>
       <div class="tiles">
         <button class="tile hero" id="collBtn"><img alt="" id="tileColl"><span class="tn">Le mie carte</span><span class="td" id="collSub">Collezione e pacchetti</span><span class="badge" id="packBadge" hidden>0</span></button>
+        <button class="tile hero pvpT" id="pvpBtn"><img alt="" id="tilePvp"><span class="tn">PvP · Sfida gli amici</span><span class="td">Chef contro chef, mostri contro mostri, cucina contro orda, classifica</span></button>
         <button class="tile" id="hubBtn"><img alt="" id="tileHub"><span class="tn">Il Bistrot</span><span class="td">Sblocchi, livelli e ristorante</span></button>
         <button class="tile" id="codexBtn"><img alt="" id="tileCodex"><span class="tn">Bestiario</span><span class="td" id="codexCount">Tutti i personaggi</span></button>
         <button class="tile" id="howBtn"><img alt="" id="tileHow"><span class="tn">Come si gioca</span><span class="td">Regole, piani e trucchi</span></button>
@@ -75,7 +76,7 @@
       <div class="sect">Gestore</div>
       <div class="mgrs" id="mgrList"></div>
       <div class="sect">Mazzo <span id="deckCount"></span></div>
-      <p class="hint">Scegli da 4 a 8 dipendenti. In partita ne hai 4 in mano, pescati a caso. Altri si trovano nelle carte durante la run.</p>
+      <p class="hint">Scegli da 4 a 8 dipendenti. In partita ne hai 3 in mano: quello che usi torna in fondo al mazzo e ne entra un altro a caso. Altri si trovano nelle carte durante la run.</p>
       <div class="deck" id="deckList"></div>
       <div class="rowbtns"><button class="ghost" id="setupBack">Indietro</button><button class="big" id="setupGo">Apri il bistrot</button></div>
     </div>
@@ -190,6 +191,60 @@
     </div>
   </div>
 
+  <div class="overlay" id="pvp" hidden>
+    <div class="sheet wide">
+      <h2>PvP</h2>
+      <p class="hint">Niente attese online: ogni sfida è un codice. Lo mandi su WhatsApp o Telegram, l'amico lo incolla qui e gioca contro di te.</p>
+      <label class="nameRow" for="pvpName">Il tuo nome da chef <input id="pvpName" maxlength="16" autocomplete="off" spellcheck="false"></label>
+      <div class="pasteBox"><input id="pvpCode" placeholder="Incolla qui un codice ABX-..." autocomplete="off" spellcheck="false"><button class="big sm" id="pvpGo">Gioca</button></div>
+      <span class="bkM" id="pvpMsg" role="status"></span>
+      <div class="sectT">Crea una sfida</div>
+      <div class="pvpGrid">
+        <button class="pvpc" id="pvpCC"><img alt="" id="pvpI1"><b>Chef contro Chef</b><span>Stesso piano e stesse carte: vince chi fa più punti</span></button>
+        <button class="pvpc" id="pvpMM"><img alt="" id="pvpI2"><b>Mostro contro Mostro</b><span>Stessa cucina da divorare: vince chi fa più danni</span></button>
+        <button class="pvpc" id="pvpCM"><img alt="" id="pvpI3"><b>Chef contro Mostro</b><span>Costruisci la tua cucina, l'amico la attacca da mostro</span></button>
+        <button class="pvpc" id="pvpMC"><img alt="" id="pvpI4"><b>Mostro contro Chef</b><span>Prepara un'orda, l'amico si difende con i suoi chef</span></button>
+      </div>
+      <p class="hint">Piano per cucina e orda:</p>
+      <div class="fchips" id="pvpFloors"></div>
+      <div class="sectT">Classifica amici</div>
+      <p class="hint" id="boardDate"></p>
+      <div class="board" id="board"></div>
+      <div class="sectT">Amici</div>
+      <div class="board" id="friendList"></div>
+      <button class="big" id="pvpBack">Torna al menu</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="armyOv" hidden>
+    <div class="sheet wide">
+      <h2>Prepara l'orda</h2>
+      <p class="hint" id="armyFloor"></p>
+      <div class="xpbox"><span class="xpbar"><i id="armyFill"></i></span><b id="armyBudget">0/600 fame</b></div>
+      <div class="list" id="armyList"></div>
+      <div class="rowbtns"><button class="ghost" id="armyBack">Indietro</button><button class="big" id="armyGo">Crea il codice</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="shareOv" hidden>
+    <div class="sheet">
+      <h2>Sfida pronta</h2>
+      <div id="shareBody"></div>
+      <button class="ghost" id="shareBack">Torna al PvP</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="inbox" hidden>
+    <div class="sheet wide">
+      <h2>Posta</h2>
+      <p class="hint center" id="mailStreak"></p>
+      <div class="ddays" id="mailDays"></div>
+      <button class="big" id="mailAll">Riscuoti tutto</button>
+      <div class="list" id="mailList"></div>
+      <button class="ghost" id="mailBack">Torna al menu</button>
+    </div>
+  </div>
+
   <div class="overlay" id="codex" hidden>
     <div class="sheet wide">
       <h2>Bestiario</h2>
@@ -218,6 +273,7 @@
       <p class="lead" id="endText"></p>
       <div class="stats" id="endStats"></div>
       <div class="found" id="endFound"></div>
+      <div id="endShare"></div>
       <button class="big" id="againBtn">Riprova</button>
       <div class="rowbtns"><button class="ghost" id="endHubBtn">Il Bistrot</button><button class="ghost" id="endMenuBtn">Menu principale</button></div>
     </div>
@@ -231,6 +287,7 @@
 <script src="js/ui.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/tutorial.js"></script>
+<script src="js/social.js"></script>
 <!--/APP-->
 </body>
 </html>

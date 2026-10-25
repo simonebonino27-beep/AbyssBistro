@@ -115,7 +115,7 @@ function pickCards(s,n){
   for(const k of shuffle(notIn.slice()).slice(0,4))pool.push(empCardFor(k));
   for(const k of shuffle([...new Set(s.deck)]).slice(0,3))if(TOWERS[k].dmg>0)pool.push(dmgCardFor(k));
   const out=[];
-  while(out.length<n&&pool.length){const wt=c=>RAR[c.rar].w*(c.curse&&s.mgr==='narvalo'?3:1);const tot=pool.reduce((a,c)=>a+wt(c),0);let r=Math.random()*tot,i=0;for(;i<pool.length;i++){r-=wt(pool[i]);if(r<=0)break}
+  while(out.length<n&&pool.length){const wt=c=>RAR[c.rar].w*(c.curse&&s.mgr==='narvalo'?3:1);const tot=pool.reduce((a,c)=>a+wt(c),0);let r=rnd()*tot,i=0;for(;i<pool.length;i++){r-=wt(pool[i]);if(r<=0)break}
     const c=pool.splice(Math.min(i,pool.length-1),1)[0];if(!out.some(o=>o.id===c.id))out.push(c)}
   return out}
 
@@ -134,7 +134,7 @@ function monCardFor(k){const d=ENEMIES[k];const owned=!!save.mon[k];return{id:'m
   eff:()=>(owned?'Entra nel mazzo':'TROVATO! Sbloccato per sempre')+' · costo '+d.mcost+' fame',apply:s=>{if(!save.mon[k]){save.mon[k]=1;writeSave();s.found.push(k)}s.mdeck.push(k);s.mpile.unshift(k)}}}
 function pickMCards(s,n){const pool=MCARDS.filter(c=>!c.ok||c.ok(s)).map(c=>Object.assign({},c));
   for(const k of shuffle(MONSTER_KEYS.filter(k=>!ENEMIES[k].boss&&!s.mdeck.includes(k))).slice(0,3))pool.push(monCardFor(k));
-  const out=[];while(out.length<n&&pool.length){const tot=pool.reduce((a,c)=>a+RAR[c.rar].w,0);let r=Math.random()*tot,i=0;for(;i<pool.length;i++){r-=RAR[pool[i].rar].w;if(r<=0)break}out.push(pool.splice(Math.min(i,pool.length-1),1)[0])}return out}
+  const out=[];while(out.length<n&&pool.length){const tot=pool.reduce((a,c)=>a+RAR[c.rar].w,0);let r=rnd()*tot,i=0;for(;i<pool.length;i++){r-=RAR[pool[i].rar].w;if(r<=0)break}out.push(pool.splice(Math.min(i,pool.length-1),1)[0])}return out}
 
 /* ===== ristorante (si migliora con le stelle Michelin) ===== */
 const RESTO={
