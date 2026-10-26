@@ -81,8 +81,10 @@ async function friendAdd(q){q=(q||'').trim();if(!q)return;if(!NET.on){toast('Ser
 let ROOM=null;
 const LIVE_NAMES={gduel:'Duello dei gestori',race:'Scalata'};
 const roomCode=()=>randId(4).replace(/[0-9]/g,c=>'ABCDEFGHJK'[+c]);
-function roomSend(o){if(ROOM&&ROOM.ch)ROOM.ch.send({type:'broadcast',event:'m',payload:o})}
-function openRoom(code,host,mode){leaveRoom();code=code.toUpperCase();const ch=NET.ch('ab-room-'+code);ROOM={code,ch,host,mode:mode||null,peer:null,started:false,gone:0,rq:{}};
+function roomSend(o){if(!ROOM||!ROOM.ch)return;const R=ROOM;try{const p=R.ch.send({type:'broadcast',event:'m',payload:o});if(o.t!=='st'&&p&&p.then)p.then(r=>{R.dbg.sent=o.t+':'+r;roomDbg()},e=>{R.dbg.sent=o.t+':errore';roomDbg()})}catch(e){R.dbg.sent=o.t+':'+e.message;roomDbg()}}
+function roomDbg(){if(ROOM&&$('roomDbg'))$('roomDbg').textContent=(ROOM.host?'casa':'ospite')+' · '+ROOM.dbg.st+' · avversario '+(ROOM.peer?'sì':'no')+' · inviato '+(ROOM.dbg.sent||'-')+' · ricevuto '+(ROOM.dbg.got||'-')}
+function openRoom(code,host,mode){leaveRoom();code=code.toUpperCase();const ch=NET.ch('ab-room-'+code);ROOM={code,ch,host,mode:mode||null,peer:null,started:false,gone:0,rq:{},dbg:{st:'collego…',sent:'',got:''},t0:Date.now()};
+  const R0=ROOM;R0.hi=setInterval(()=>{if(ROOM!==R0){clearInterval(R0.hi);return}if(!R0.started&&!R0.host)roomSend({t:'hi',id:save.pid,name:save.name});if(!R0.started&&R0.peer&&Date.now()-R0.t0>15000&&$('roomStatus'))$('roomStatus').innerHTML='<b>'+esc(R0.peer.name)+'</b> c\'è ma la partita non parte. Uscite tutti e due e riprovate.'},1500);
   ch.on('presence',{event:'sync'},()=>{if(!ROOM||ROOM.ch!==ch)return;const st=ch.presenceState();const ks=Object.keys(st).filter(k=>k!==save.pid);
     const peer=ks.length?st[ks[0]][0]:null;
     if(!ROOM.host&&peer&&peer.host)ROOM.mode=peer.mode;
@@ -92,13 +94,14 @@ function openRoom(code,host,mode){leaveRoom();code=code.toUpperCase();const ch=N
     if(!ROOM.host&&peer&&!peer.host&&!ROOM.started){toast('Questa stanza non ha un padrone di casa');}
     roomUI();
     if(ROOM.host&&peer&&!ROOM.started)setTimeout(()=>{if(ROOM&&ROOM.ch===ch&&ROOM.peer&&!ROOM.started)hostStart()},700)});
-  ch.on('broadcast',{event:'m'},({payload})=>{if(ROOM&&ROOM.ch===ch)roomMsg(payload)});
-  ch.subscribe(s=>{if(s==='SUBSCRIBED')ch.track({id:save.pid,name:save.name,lvl:save.lvl||1,tr:save.trophies,host,mode:mode||null});else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){toast('Non riesco a collegarmi al server');}});
-  showRoom()}
-function leaveRoom(){if(ROOM){NET.drop(ROOM.ch);ROOM=null}}
-function hostStart(){const seed=1+Math.floor(Math.random()*2e9),floor=[0,1,2][Math.floor(Math.random()*3)];const o={t:'start',mode:ROOM.mode,seed,floor};roomSend(o);beginCountdown(o)}
+  ch.on('broadcast',{event:'m'},({payload})=>{if(ROOM&&ROOM.ch===ch){if(payload.t!=='st'){ROOM.dbg.got=payload.t;roomDbg()}roomMsg(payload)}});
+  ch.subscribe(s=>{if(ROOM&&ROOM.ch===ch){ROOM.dbg.st=s;roomDbg()}if(s==='SUBSCRIBED')ch.track({id:save.pid,name:save.name,lvl:save.lvl||1,tr:save.trophies,host,mode:mode||null});else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){toast('Non riesco a collegarmi al server');}});
+  showRoom();roomDbg()}
+function leaveRoom(){if(ROOM){clearInterval(ROOM.hi);NET.drop(ROOM.ch);ROOM=null}}
+function hostStart(){const seed=1+Math.floor(Math.random()*2e9),floor=[0,1,2][Math.floor(Math.random()*3)];const o={t:'start',mode:ROOM.mode,seed,floor};ROOM.lastStart=o;ROOM.lastStartAt=Date.now();roomSend(o);beginCountdown(o)}
 function roomMsg(m){switch(m.t){
-  case'start':if(!ROOM.started||S&&S.mode==='end')beginCountdown(m);break;
+  case'start':if(!ROOM.started||(S&&S.mode==='end'&&ROOM.lastSeed!==m.seed)){ROOM.lastSeed=m.seed;beginCountdown(m)}break;
+  case'hi':if(ROOM.host){if(!ROOM.peer&&m.id){ROOM.peer={id:m.id,name:m.name};addFriendId(m.id,m.name);roomUI()}if(!ROOM.started){hostStart()}else if(ROOM.lastStart&&Date.now()-ROOM.lastStartAt<15000)roomSend(ROOM.lastStart)}break;
   case'rq':ROOM.rq.peer=1;toast(ROOM.peer?ROOM.peer.name+' vuole la rivincita!':'Rivincita!');if(ROOM.host&&ROOM.rq.me){ROOM.rq={};hostStart()}if(typeof liveEndRefresh==='function')liveEndRefresh();break;
   default:if(typeof liveMsg==='function')liveMsg(m)}}
 let cdTimer=null;
@@ -125,7 +128,7 @@ function onlineFriends(){return Object.values(save.friends).filter(f=>f.id&&ONLI
 
 /* ---------- scheda Amici: parte online ---------- */
 let boardTab='fr',clanView=null,clanCh=null;
-function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',rtOK&&dbOK);$('onlDiag').textContent=!NET.on?'':(dbOK?'Server ✓':'Server ✗'+(dbE?' ('+dbE+')':' (in attesa)'))+' · '+(rtOK?'Diretta ✓':'Diretta ✗'+(rtErr?' ('+rtErr+')':' (in attesa)'))+' · v7';$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
+function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',rtOK&&dbOK);$('onlDiag').textContent=!NET.on?'':(dbOK?'Server ✓':'Server ✗'+(dbE?' ('+dbE+')':' (in attesa)'))+' · '+(rtOK?'Diretta ✓':'Diretta ✗'+(rtErr?' ('+rtErr+')':' (in attesa)'))+' · v8';$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
   $('myCode').textContent=save.pid;$('myTr').textContent=save.trophies;
   const fr=Object.values(save.friends).filter(f=>f.id).sort((a,b)=>(ONLINE[b.id]?1:0)-(ONLINE[a.id]?1:0));
   $('onlineList').innerHTML=fr.length?fr.map(f=>{const o=ONLINE[f.id];return'<div class="brow fr"><span class="odot'+(o?' on':'')+'"></span><span class="bn">'+esc(f.name)+(o&&o.st==='game'?' <i>in partita</i>':'')+'</span>'+(o&&o.st!=='game'?'<span class="frb"><button class="buy" data-ch="gduel" data-id="'+f.id+'">Duello</button><button class="buy alt" data-ch="race" data-id="'+f.id+'">Scalata</button></span>':'<span class="bs">'+(o?'':'offline')+'</span>')+'</div>'}).join(''):'<p class="hint">Aggiungi un amico col suo codice amico (lo trova qui sopra, nella sua scheda Amici).</p>';
