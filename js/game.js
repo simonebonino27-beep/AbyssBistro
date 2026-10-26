@@ -167,9 +167,9 @@ function updEnemy(e,dt){if(e.dead)return;e.hitT=Math.max(0,e.hitT-dt);
   let sp=e.speed*(S.kind==='def'?S.mods.enemySpeed:S.mm.speed);
   if(e.slow>0){e.slow-=dt;if(!e.d.noSlow)sp*=.5}if(e.dash>0){e.dash-=dt;sp*=3}if(e.rage)sp*=1.4;
   if(e.stun>0){e.stun-=dt;sp=0}if(S.freezeT>0)sp=0;
-  if(e.conf>0){e.conf-=dt;e.pd=Math.max(0,e.pd-sp*.7*dt)}else e.pd+=sp*dt;
+  if(e.confCd>0)e.confCd-=dt;if(e.conf>0){e.conf-=dt;e.pd=Math.max(0,e.pd-sp*.4*dt)}else e.pd+=sp*dt;
   const p=e.path.at(e.pd);e.x=p.x;e.y=p.y;e.dirx=p.dx;e.diry=p.dy;if(p.dx>.1)e.face=1;else if(p.dx<-.1)e.face=-1;
-  if(e.disg&&e.pd>e.path.len-140){e.disg=false;text(e.x,e.y-16,'SORPRESA!','#ff4f5e',1);sfx('nope')}
+  if(e.disg&&e.pd>e.path.len*.45){e.disg=false;text(e.x,e.y-16,'SORPRESA!','#ff4f5e',1);sfx('nope')}
   if(!e.d.fly)for(let i=S.plates.length-1;i>=0;i--){const pl=S.plates[i];if(Math.hypot(pl.x-e.x,pl.y-e.y)<14){S.plates.splice(i,1);
     if(e.type==='granchioReale'){e.hp=Math.min(e.max*1.5,e.hp+e.max*.08);e.grow=Math.min(1.5,e.grow+.08);text(e.x,e.y-34,'SLURP! Cresce','#ff4f5e',1);sfx('gulp');break}
     e.stun=Math.max(e.stun,e.d.boss?.5:1.3);sfx('trap');fx({k:'ring',x:pl.x,y:pl.y,r:26,dur:.45,col:'#ffffff'});text(pl.x,pl.y-14,'GNAM!','#ffffff',.8);hurt(e,45);break}}
@@ -202,7 +202,7 @@ function updTower(t,dt){t.anim=Math.max(0,t.anim-dt);t.atk=Math.max(0,(t.atk||0)
       sfx('zap');fx({k:'zap',pts:[[t.x,t.y-8],...hit.map(e=>[e.x,e.y])],dur:.2,col:'#f7e35a',light:0});for(const e of hit){e.slow=2;hurt(e,D,{src:t})}break}
     case'stun':t.anim=.3;sfx('shot');fx({k:'ring',x:tg.x,y:tg.y,r:42,dur:.35,col:'#9ef7ff',light:1});for(const e of S.enemies)if(!e.dead&&Math.hypot(e.x-tg.x,e.y-tg.y)<42+e.r*.4&&canSee(t,e,true)){e.stun=Math.max(e.stun,e.d.boss?.15:.7);hurt(e,D,{src:t,boom:1})}break;
     case'burst':t.anim=.6;sfx('pop');fx({k:'ring',x:t.x,y:t.y,r:R,dur:.4,col:'#f2d54a'});for(const e of list)hurt(e,D,{src:t,boom:1});break;
-    case'ink':sfx('ink');S.clouds.push({x:tg.x,y:tg.y,r:40,t:3.2,id:Math.random()});break;
+    case'ink':sfx('ink');S.clouds.push({x:tg.x,y:tg.y,r:32,t:2.2,id:Math.random()});break;
     case'hold':{const h=list.find(e=>!e.d.fly&&!e.d.boss);if(!h){t.cd=.4;return}h.stun=Math.max(h.stun,1.6);hurt(h,D,{src:t});t.anim=.5;text(h.x,h.y-h.r-10,'Assaggia!','#f1dca2',.7);sfx('bite');break}
     case'gulp':t.anim=.9;sfx('gulp');S.shake=.3;fx({k:'ring',x:t.x,y:t.y,r:R,dur:.6,col:'#9fd6e8'});text(t.x,t.y-34,'GLOM!','#9fd6e8',1);for(const e of list)hurt(e,e.d.boss?D*.3:D,{src:t,boom:1});break;
     case'random':{const r=rnd();
@@ -229,7 +229,7 @@ function update(dt){
   if(S.mode==='wave'){S.spawnT-=dt;while(S.spawnT<=0&&S.queue.length){const[ty,g]=S.queue.shift();spawnEnemy(ty,{hpMul:ENEMIES[ty].boss?bossMul():S.hpMul});S.spawnT+=g}}
   if(S.mode==='mplay'){updMonster(dt);if(S.mode!=='mplay')return}
   for(const e of S.enemies)updEnemy(e,dt);
-  for(const c of S.clouds){c.t-=dt;for(const e of S.enemies)if(!e.dead&&Math.hypot(e.x-c.x,e.y-c.y)<c.r){if(!e.d.boss&&!e.seen.has(c.id)){e.seen.add(c.id);e.conf=1.3}hurt(e,4*dt)}}
+  for(const c of S.clouds){c.t-=dt;for(const e of S.enemies)if(!e.dead&&Math.hypot(e.x-c.x,e.y-c.y)<c.r){if(!e.d.boss&&!e.seen.has(c.id)&&!(e.confCd>0)){e.seen.add(c.id);e.conf=.8;e.confCd=3}hurt(e,4*dt)}}
   S.clouds=S.clouds.filter(c=>c.t>0);S.enemies=S.enemies.filter(e=>!e.dead);
   for(const t of S.towers)updTower(t,dt);updShots(dt);
   if(S.kind==='def'&&S.mgr==='nonno'&&S.mode==='wave'){S.torpT-=dt;if(S.torpT<=0){S.torpT=6;const tg=S.enemies.filter(e=>!e.disg).sort((a,b)=>prog(b)-prog(a))[0];if(tg){S.shots.push({x:292,y:476,tg,dmg:80*(1+.3*S.depth),torp:1,a:0});sfx('shot')}}}
