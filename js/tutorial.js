@@ -11,9 +11,9 @@ const TUT=[
   /* --- prima dell'ondata 1: il minimo indispensabile --- */
   {text:'Benvenuto all\'Abyss Bistro! Io sono il Polpo Chef. Vedi la freccia? Da quella grotta escono i mostri degli abissi.',btn:'Avanti',pos:'mid',point:caveP},
   {text:'Seguono il sentiero fino al mio sushi bar. Se ci arrivano, mangiano il bancone: il cuore in alto è la sua vita. A zero, si chiude.',btn:'Avanti',pos:'mid',hi:'#hpPill'},
-  {text:'Per fermarli assumo dipendenti. In basso hai 3 carte pescate dal tuo mazzo. Tocca il Granchio sushiman.',pos:'mid',only:'granchio',hi:()=>handBtn('granchio'),wait:()=>S.tool==='granchio'},
+  {text:'Per fermarli assumo dipendenti. In basso hai 4 carte del tuo mazzo, come in Clash Royale. Tocca il Granchio sushiman.',pos:'mid',only:'granchio',hi:()=>handBtn('granchio'),wait:()=>S.tool==='granchio'},
   {text:'In alto c\'è la sua scheda: cosa fa, quanto fa male, fin dove arriva e quanto costa. Ora tocca la piazzola con la freccia.',pos:'bottom',only:'granchio',slot:tutSlotNear,wait:()=>S.towers.length>=1},
-  {text:'Assunto! Guarda la mano: la carta usata è tornata in fondo al mazzo e ne è entrata un\'altra a caso. Funziona sempre così.',btn:'Avanti',pos:'mid',hi:'#shop'},
+  {text:'Assunto! Guarda la mano: la carta usata è andata in fondo al mazzo ed è entrata la prossima in fila: la vedi sempre nel riquadrino a sinistra.',btn:'Avanti',pos:'mid',hi:'#shop'},
   {text:'Sopra la mano c\'è l\'anteprima: arrivano solo pochi ghiozzi scrocconi. Premi Inizia ondata e guarda cosa succede.',pos:'mid',hi:'#startBtn',start:1,wait:()=>S.mode==='wave'},
   /* --- ondata 1: osservare --- */
   {text:'Il Granchio lancia nigiri da solo a chi entra nel suo raggio. Tu non devi mirare: devi scegliere dove metterli.',pos:'top',auto:6,wait:()=>S.earned>0&&tutT>3},
@@ -36,7 +36,7 @@ const TUT=[
   {text:'BOSS BATTUTO! Hai vinto stelle Michelin e un pacchetto di carte: lo apri dal menu, in Le mie carte. Scegli la carta e scendiamo.',pos:'top',z:1,free:1,wait:()=>$('cards').hidden&&S.mode!=='cards'},
   {text:'Ogni piano ha regole sue, le leggi qui prima di scendere. Da adesso sei tu lo chef: più piani, buio, boss più cattivi. Buon servizio!',btn:'Ci penso io!',pos:'top',z:1,free:1},
   {text:null}];
-function handBtn(k){const i=S.hand.indexOf(k);return i>=0?$('shop').children[i]:null}
+function handBtn(k){const i=S.hand.indexOf(k);return i>=0?$('shop').children[i+1]:null}
 function clearHi(){document.querySelectorAll('.tutHi').forEach(e=>e.classList.remove('tutHi'))}
 function coachBox(st){coach.className='pos-'+(st.pos||'mid');coach.style.zIndex=st.z?'7':'';
   coach.innerHTML='<img alt="" src="'+ICONS.m.polpo+'"><div class="cb"><span class="cn">Polpo Chef · '+(tutStep+1)+'/'+(TUT.length-1)+'</span><span class="ct">'+st.text+'</span><div class="crow">'+(st.btn?'<button class="big sm" id="coachNext">'+st.btn+'</button>':'')+'<button class="ghost sm" id="coachSkip">Salta tutorial</button></div></div>';coach.hidden=false;
@@ -58,7 +58,7 @@ function tutTick(dt){if(!S||!S.tutorial||tutStep<0||tutStep>=TUT.length)return;c
 function startTutorial(){save.asked=1;save.novice=1;writeSave();hideAll();shopKey='';tutStep=-1;
   const deck=['granchio','squalo','rana','sardine','polipetto'].filter(k=>save.emp[k]);
   startDefense('short','polpo',deck);S.tutorial=true;S.floors[0]=0;S.depth=0;loadFloor(0);for(const s of WORLD.slots)s.tower=null;
-  S.hand=['granchio','squalo','rana'];S.pile=shuffle(deck.filter(k=>!S.hand.includes(k)));floorIntro()}
+  S.hand=['granchio','squalo','rana','sardine'];S.pile=deck.filter(k=>!S.hand.includes(k));floorIntro()}
 function stopCoach(done){clearHi();coach.hidden=true;tutStep=-1;if(S){S.tutorial=false;S.tutSlot=null;S.tutTower=null;S.tutPoint=null;S.tutOnly=null}
   save.asked=1;if(done==='lost'){writeSave();return}if(done&&!save.tutDone){save.tutDone=1;save.perle+=100;toast('Tutorial completato: +100 perle nel Bistrot')}else if(!done)save.tutDone=1;writeSave()}
 /* domanda alla prima apertura */
@@ -77,8 +77,8 @@ const MODE_INTRO={
     ['e:reAragosta','Ogni 5 ondate arriva un boss e si cambia piano. Dopo il sesto si ricomincia, ma più forte.'],
     ['e:martello','I nemici diventano più resistenti a ogni ondata. Potenzia presto e scegli carte che durano.']]},
   monster:{title:'Mostro affamato',items:[['e:kraken','Ruoli invertiti: qui sei tu l\'orda. La cucina è difesa dal computer, che assume dipendenti a caso.'],
-    ['e:ghiozzo','In basso hai 4 mostri. Toccane uno per mandarlo all\'attacco: costa fame, la barra verde che si ricarica da sola.'],
-    ['e:lumaca','Conviene accumulare fame e mandarne tanti insieme: uno alla volta vengono fatti fuori.'],
+    ['e:ghiozzo','In basso hai 4 mostri, a sinistra vedi il prossimo. Toccane uno per mandarlo all\'attacco: costa fame, la barra rossa che si ricarica da sola (1 ogni 2 secondi, massimo 10).'],
+    ['e:lumaca','Conviene accumulare fame e mandarne tanti insieme: uno alla volta vengono fatti fuori. I boss: uno alla volta.'],
     ['e:ladro','Hai 2:30 per distruggere il bancone. Vinci 3 round di fila. Dove ci sono due sentieri, scegli la corsia col pulsante.'],
     ['e:megalodonte','I boss che batti in difesa diventano mostri leggendari da usare qui.']]},
   daily:{title:'Sfida del giorno',items:[['m:gamberi','Ogni giorno una run corta diversa, uguale per tutti: sfida i tuoi amici sullo stesso menu.'],

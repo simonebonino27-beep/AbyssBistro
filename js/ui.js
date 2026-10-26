@@ -7,7 +7,7 @@ const show=(id,on=true)=>{$(id).hidden=!on};
 const OVERLAYS=['menu','setup','msetup','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','packOv','cinfo','roomOv','inviteOv','inbox','shareOv','armyOv'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
-const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
+const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici',contessa:'+15% velocità',banchiere:'Interessi',seppia:'Scappellotto',tsunami:'Tsunami'};
 
 /* ---------- vista ---------- */
 function fit(){const a=$('app').getBoundingClientRect();VW=Math.max(1,a.width);VH=Math.max(1,a.height);DPR=Math.min(2,window.devicePixelRatio||1);
@@ -27,6 +27,7 @@ cv.addEventListener('pointermove',ev=>{if(S)S.hover=ev.pointerType==='mouse'?toL
 cv.addEventListener('pointerleave',()=>{if(S)S.hover=null});
 cv.addEventListener('pointerdown',ev=>{if(!S||S.kind!=='def'||(S.mode!=='build'&&S.mode!=='wave'))return;const p=toLogical(ev);
   if(S.tool==='trap'){if(distToPaths(p.x,p.y)<18&&p.y<470){S.plates.push({x:p.x,y:p.y});S.traps--;S.tool=null;sfx('place');fx({k:'ring',x:p.x,y:p.y,r:18,dur:.3,col:'#ffffff'})}else{sfx('nope');toast('Il piatto va messo sul sentiero')}return}
+  if(S.tool&&isSpell(S.tool)){if(castSpell(S.tool,p))S.tool=null;return}
   const slot=nearSlot(p);
   if(S.tool){if(!slot||slot.tower){sfx('nope');toast('Tocca una piazzola libera');return}if(hire(slot,S.tool))S.tool=null;return}
   if(slot&&slot.tower)openTower(slot.tower);else if(slot)openHire(slot);else closePanel()});
@@ -44,7 +45,7 @@ function openTower(t){S.sel=t;S.selSlot=t.slot;sfx('click');const d=t.d,max=t.lv
   placePanel(t.x,t.y,110);
   $('upBtn').onclick=()=>{if(t.lv>=3||S.perle<cost)return;S.perle-=cost;t.spent+=cost;t.lv++;sfx('card');fx({k:'ring',x:t.x,y:t.y,r:26,dur:.4,col:'#e8c14a'});openTower(t)};
   $('sellBtn').onclick=()=>{S.perle+=refund;t.slot.tower=null;S.towers=S.towers.filter(x=>x!==t);sfx('nope');closePanel()}}
-function openHire(slot){if(S.tutorial&&S.tutOnly==='-'){toast('Segui il Polpo Chef');return}S.sel=null;S.selSlot=slot;sfx('click');const keys=(S.kitBuild?TOWER_KEYS.filter(k=>save.emp[k]):[...new Set(S.hand.filter(Boolean))]).filter(k=>!(S.tutorial&&S.tutOnly)||k===S.tutOnly);
+function openHire(slot){if(S.tutorial&&S.tutOnly==='-'){toast('Segui il Polpo Chef');return}S.sel=null;S.selSlot=slot;sfx('click');const keys=(S.kitBuild?EMP_KEYS.filter(k=>save.emp[k]):[...new Set(S.hand.filter(Boolean))].filter(k=>!isSpell(k))).filter(k=>!(S.tutorial&&S.tutOnly)||k===S.tutOnly);
   if(pStyle()==='mini')panel.innerHTML='<div class="mhire">'+keys.map(k=>{const c=hireCost(k);return'<button class="hire" data-k="'+k+'" aria-label="Assumi '+TOWERS[k].name+'"'+(S.perle<c?' disabled':'')+'><img alt="" src="'+ICONS.t[k]+'"><span class="cs"><span class="pearl"></span>'+c+'</span></button>'}).join('')+'</div>';else
   panel.innerHTML='<h4>Assumi qui</h4>'+keys.map(k=>{const d=TOWERS[k],c=hireCost(k);return'<button class="hire" data-k="'+k+'"'+(S.perle<c?' disabled':'')+'><img alt="" src="'+ICONS.t[k]+'"><span class="grow">'+d.full+'<small>'+d.info+'</small></span><span class="cs"><span class="pearl"></span>'+c+'</span></button>'}).join('')+'<p>In mano hai 3 dipendenti pescati a caso dal mazzo: quello che usi torna in fondo e ne entra un altro.</p>';
   placePanel(slot.x,slot.y,60+keys.length*50);panel.querySelectorAll('.hire').forEach(b=>b.onclick=()=>hire(slot,b.dataset.k))}
@@ -52,16 +53,17 @@ function closePanel(){if(S){S.sel=null;S.selSlot=null}panel.hidden=true}
 
 /* ---------- barra in basso ---------- */
 const shop=$('shop');let shopKey='';
-function renderShop(){const mon=S.kind==='mon';const hand=mon?S.mhand:S.hand;const key=(mon?'m':'d')+hand.join(',');if(key===shopKey)return;shopKey=key;shop.innerHTML='';
+function renderShop(){const mon=S.kind==='mon';const hand=mon?S.mhand:S.hand;const nx=nextCard();const key=(mon?'m':'d')+hand.join(',')+'|'+nx;if(key===shopKey)return;shopKey=key;shop.innerHTML='';
+  {const n=document.createElement('div');n.className='nextC';n.setAttribute('aria-label','Prossima carta');n.innerHTML='<span>Dopo</span>'+(nx?'<img alt="" src="'+(mon?ICONS.e[nx]:ICONS.t[nx])+'">':'');shop.appendChild(n)}
   hand.forEach((k,i)=>{const b=document.createElement('button');b.className='emp';b.dataset.i=i;if(!k){b.disabled=true;shop.appendChild(b);return}
     const d=mon?ENEMIES[k]:TOWERS[k];b.innerHTML='<span class="rar" style="background:var('+RAR[d.rar].c+')"></span><img alt="" src="'+(mon?ICONS.e[k]:ICONS.t[k])+'"><span class="ntx"><span class="nm">'+(mon?d.name.split(' ')[0]+(d.group?' x3':''):d.name)+'</span><span class="cs"></span></span>';
-    b.onclick=()=>{if(mon){const ok=S.hunger>=monCost(k);playMon(i);if(ok)toast(d.name+': '+d.info);return}if(S.tutorial&&S.tutOnly&&S.tutOnly!==k){sfx('nope');toast(S.tutOnly==='-'?'Segui il Polpo Chef':'Il Polpo Chef dice: prima '+TOWERS[S.tutOnly].name);return}sfx('click');closePanel();S.tool=S.tool===k?null:k};shop.appendChild(b)})}
+    b.onclick=()=>{if(mon){const ok=S.hunger>=monCost(k);playMon(i);if(ok&&S.enemies.some(e=>e.type===k))toast(d.name+': '+d.info);return}if(S.tutorial&&S.tutOnly&&S.tutOnly!==k){sfx('nope');toast(S.tutOnly==='-'?'Segui il Polpo Chef':'Il Polpo Chef dice: prima '+TOWERS[S.tutOnly].name);return}sfx('click');closePanel();S.tool=S.tool===k?null:k};shop.appendChild(b)})}
 const cache={};function setT(id,v){if(cache[id]!==v){cache[id]=v;$(id).textContent=v}}
 function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderShop();
   if(mon){setT('hpLbl',String(Math.max(0,Math.ceil(S.baseHp))));$('perlePill').hidden=true;const m=Math.max(0,Math.ceil(S.timer));setT('waveLbl','Round '+(S.fi+1)+'/3 · '+Math.floor(m/60)+':'+String(m%60).padStart(2,'0'));
-    $('hungerWrap').hidden=false;$('hungerFill').style.width=(S.hunger/S.hungerMax*100)+'%';setT('hungerLbl',Math.floor(S.hunger)+'/'+S.hungerMax);
+    $('hungerWrap').hidden=false;$('hungerFill').style.width=(S.hunger/S.hungerMax*100)+'%';setT('hungerLbl',Math.floor(S.hunger)+'/'+S.hungerMax+' fame');
     for(const b of shop.children){const k=S.mhand[b.dataset.i];if(!k)continue;const c=monCost(k);b.classList.toggle('poor',S.hunger<c);const cs=b.querySelector('.cs');const h='<span class="fang"></span>'+c;if(cs.dataset.h!==h){cs.dataset.h=h;cs.innerHTML=h}}
-    $('abilityBtn').hidden=true;$('handBtn').hidden=S.mode!=='mplay';$('handBtn').classList.toggle('poor',S.hunger<10);setT('handCost','10 fame');$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
+    $('abilityBtn').hidden=true;$('handBtn').hidden=S.mode!=='mplay';$('handBtn').classList.toggle('poor',S.hunger<1);setT('handCost','1 fame');$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
     $('laneBtn').hidden=WORLD.paths.length<2;setT('laneLbl',S.lane?'Corsia destra':'Corsia sinistra')}
   else{setT('hpLbl',String(S.hp));$('perlePill').hidden=false;setT('perleLbl',String(S.perle));$('hungerWrap').hidden=true;$('laneBtn').hidden=true;
     const boss=isBossWave();setT('waveLbl',S.run==='inf'?'Ondata '+(S.total+1)+(boss?' · Boss':''):'Piano '+(S.fi+1)+' · '+(boss?'Boss':(S.wave+1)+'/'+wavesPer()));
@@ -73,7 +75,8 @@ function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderS
     $('startBtn').hidden=S.mode!=='build';$('shop').hidden=!!S.kitBuild;$('abilityBtn').hidden=!!S.kitBuild;$('handBtn').hidden=S.mode!=='build'||!!S.kitBuild;$('handBtn').classList.toggle('poor',S.perle<15);setT('handCost','15 perle');setT('startBtn',S.kitBuild?'Crea il codice della cucina':boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
   syncToolInfo();syncPreview();setT('speedBtn','x'+S.speed)}
 function statLine(k){const d=TOWERS[k],meta=1+.1*((save.emp[k]||1)-1),dm=d.dmg*(S&&S.kind==='def'?S.mods.dmg[k]*S.mods.all:1)*meta,rg=Math.round(d.range*(S&&S.kind==='def'?S.mods.range:1));
-  switch(d.kind){case'light':return'Raggio di luce '+rg+' · i nemici illuminati prendono +15% danni';case'buff':return'Raggio '+rg+' · +30% velocità d\'attacco ai vicini';
+  if(d.spell)return d.spell==='rush'?'Tutti i dipendenti +60% velocità per 7s':'Raggio '+d.range+(d.dmg?' · '+Math.round(d.dmg*meta)+' danni':'');
+  switch(d.kind){case'aura':return'Rallenta del 30% nel raggio '+rg+' · '+fmt(dm)+' danni ogni '+d.rate+'s a tutti';case'mine':return'Mine da '+Math.round(dm)+' danni, fino a 3 · una ogni '+d.rate+'s';case'push':return'Rispedisce indietro di 60 · '+fmt(dm)+' danni ogni '+d.rate+'s';case'multi':return d.multi+' nigiri da '+fmt(dm)+' · ogni '+d.rate+'s · gittata '+rg;case'splash':return'Pizza da '+fmt(dm)+' (70% attorno) · ogni '+d.rate+'s · gittata '+rg;case'exec':return'Danno '+fmt(dm)+', x3 sotto un terzo di vita · gittata '+rg;case'shred':return'Danno '+fmt(dm)+' ogni '+d.rate+'s · +25% danni presi dal morso';case'light':return'Raggio di luce '+rg+' · i nemici illuminati prendono +15% danni';case'buff':return'Raggio '+rg+' · +30% velocità d\'attacco ai vicini';
     case'heal':return'Raggio '+rg+' · toglie blocchi e nausea ogni '+d.rate+'s, poi protegge';case'bank':return'+30 perle a fine ondata (+12 per livello)';
     case'swarm':return'Danno '+fmt(dm)+' ogni '+d.rate+'s · gittata '+rg;case'gulp':return'Danno '+Math.round(dm)+' a tutti davanti · ogni '+d.rate+'s · gittata '+rg;
     case'patrol':return'Danno '+fmt(dm)+' a chi tocca · gira attorno alla piazzola';case'ink':return'Nube per 3s: i nemici tornano indietro · gittata '+rg;
@@ -82,7 +85,7 @@ let tiKey='';function syncToolInfo(){const el=$('toolInfo');const k=S.kind==='de
   if(k==='trap'){el.style.setProperty('--rc','var(--pearl)');el.innerHTML='<img alt="" src="'+ICONS.plate+'"><div class="ti"><div class="tt"><span class="tn">Piatto trappola</span></div><span class="tinfo">Il primo nemico che ci passa sopra si ferma a mangiare e prende 45 danni. Chi vola ci passa sopra.</span><span class="thint">Tocca il sentiero per servirlo · tocca di nuovo il pulsante per annullare</span></div><span class="tcost">'+S.traps+'</span>';el.hidden=false;placeInfo(el);return}
   toastEl.classList.remove('on');
   const d=TOWERS[k],c=hireCost(k);el.style.setProperty('--rc','var('+RAR[d.rar].c+')');
-  el.innerHTML='<img alt="" src="'+ICONS.t[k]+'"><div class="ti"><div class="tt"><span class="tn">'+d.full+'</span><span class="chip" style="background:var('+RAR[d.rar].c+')">'+RAR[d.rar].n+'</span></div><span class="tinfo">'+d.info+'</span><span class="tstat">'+statLine(k)+'</span><span class="tjoke">'+d.joke+'</span><span class="thint">'+(S.perle>=c?'Tocca una piazzola che brilla per assumerlo':'Ti mancano '+(c-S.perle)+' perle')+' · tocca di nuovo la carta per annullare</span></div><span class="tcost"><span class="pearl"></span>'+c+'</span>';el.hidden=false;placeInfo(el)}
+  el.innerHTML='<img alt="" src="'+ICONS.t[k]+'"><div class="ti"><div class="tt"><span class="tn">'+d.full+'</span><span class="chip" style="background:var('+RAR[d.rar].c+')">'+RAR[d.rar].n+'</span></div><span class="tinfo">'+d.info+'</span><span class="tstat">'+statLine(k)+'</span><span class="tjoke">'+d.joke+'</span><span class="thint">'+(S.perle>=c?(d.spell?(d.spell==='rush'?'Tocca il campo per lanciarlo':'Tocca il sentiero dove lanciarlo'):'Tocca una piazzola che brilla per assumerlo'):'Ti mancano '+(c-S.perle)+' perle')+' · tocca di nuovo la carta per annullare</span></div><span class="tcost"><span class="pearl"></span>'+c+'</span>';el.hidden=false;placeInfo(el)}
 /* la scheda va dove copre meno: in alto o subito sopra la mano, evitando l'ingresso dei mostri e le piazzole libere */
 function placeInfo(el){el.style.top='';el.style.bottom='';const h=el.offsetHeight,barTop=$('bar').getBoundingClientRect().top,hud=54;
   const cand=[{top:hud},{top:Math.max(hud,barTop-h-6)}];const pts=[];
@@ -97,9 +100,9 @@ $('wasabiBtn').onclick=()=>{if(S.mode!=='wave'||S.wasabi<=0){toast('Usala quando
 $('freezeBtn').onclick=()=>{if(S.mode!=='wave'||S.freeze<=0){toast('Usalo quando arrivano i nemici');return}S.freeze--;S.freezeT=4;sfx('zap');fx({k:'flash',dur:.5,col:'#bfe9ff'});toast('Cervelli congelati per 4 secondi')};
 $('laneBtn').onclick=()=>{S.lane=S.lane?0:1;sfx('click')};
 $('handBtn').onclick=()=>{if(!S)return;
-  if(S.kind==='mon'){if(S.mode!=='mplay')return;if(S.hunger<10){sfx('nope');toast('Servono 10 di fame');return}S.hunger-=10;const old=S.mhand.slice();for(let i=0;i<3;i++)S.mhand[i]=null;for(let i=0;i<3;i++)S.mhand[i]=drawMon();S.mpile.push(...old.filter(Boolean));sfx('card');return}
+  if(S.kind==='mon'){if(S.mode!=='mplay')return;if(S.hunger<1){sfx('nope');toast('Serve 1 fame');return}S.hunger-=1;const old=S.mhand.slice();for(let i=0;i<HAND_N;i++)S.mhand[i]=null;for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();S.mpile.push(...old.filter(Boolean));sfx('card');return}
   if(S.mode!=='build'){sfx('nope');toast('La mano si cambia tra un\'ondata e l\'altra');return}if(S.tutorial&&S.tutOnly){sfx('nope');toast('Segui il Polpo Chef');return}if(S.perle<15){sfx('nope');toast('Servono 15 perle');return}
-  S.perle-=15;S.tool=null;closePanel();const old=S.hand.slice();for(let i=0;i<3;i++)S.hand[i]=null;for(let i=0;i<3;i++)S.hand[i]=drawCard();S.pile.push(...old.filter(Boolean));sfx('card');toast('Mano nuova dal mazzo')};
+  S.perle-=15;S.tool=null;closePanel();const old=S.hand.slice();for(let i=0;i<HAND_N;i++)S.hand[i]=null;for(let i=0;i<HAND_N;i++)S.hand[i]=drawCard();S.pile.push(...old.filter(Boolean));sfx('card');toast('Mano nuova dal mazzo')};
 $('speedBtn').onclick=()=>{if(!S)return;sfx('click');S.speed=S.speed===1?2:1};
 $('startBtn').onclick=()=>{sfx('click');closePanel();if(S.kitBuild){exportKit();return}startWave()};
 
@@ -152,7 +155,7 @@ const MODES=[{id:'short',name:'Run corta',desc:'3 piani: uno facile, uno diffici
 function showMenu(tab){rnd=Math.random;musicMode=0;pausedAudio=false;applyVol();closePanel();hideAll();idleScene();shopKey='';
   $('mPerle').textContent=save.perle;$('mStars').textContent=save.stars;
   const seen=MONSTER_KEYS.filter(k=>save.seen[k]).length;
-  $('menuStats').innerHTML='<div><b>'+(save.lvl||1)+'</b>livello</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+Object.keys(save.emp).length+'/'+TOWER_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
+  $('menuStats').innerHTML='<div><b>'+(save.lvl||1)+'</b>livello</div><div><b>'+save.wins+'</b>vittorie</div><div><b>'+EMP_KEYS.filter(k=>save.emp[k]).length+'/'+EMP_KEYS.length+'</b>dipendenti</div><div><b>'+seen+'/'+MONSTER_KEYS.length+'</b>mostri visti</div>';
   const dy=dailyInfo(),done=save.dailyDone===dy.key;
   $('dailyBtn').innerHTML='<span class="dTag">Sfida del giorno · '+dy.label+'</span><span class="dName">'+MANAGERS[dy.mgr].name+' + '+dy.curse.name+'</span><span class="dRule">Run corta con gestore e mazzo fissi, uguali per tutti. Maledizione già attiva: '+dy.curse.eff(newRun('def','short',{}))+'</span><span class="dDeck">'+dy.deck.map(k=>'<img alt="" title="'+TOWERS[k].full+'" src="'+ICONS.t[k]+'">').join('')+'</span><span class="dRew">'+(done?'Completata oggi. Domani ne arriva una nuova.':'Premio alla vittoria: perle x2 e 3 stelle')+'</span>'+(done?'<span class="dDone">Fatta</span>':'');
   $('modeList').innerHTML=MODES.map(m=>'<button class="mode" data-mode="'+m.id+'"><img alt="" src="'+m.icon()+'"><span class="mb"><span class="mn">'+m.name+'</span><span class="md">'+m.desc+'</span><span class="rec">'+m.rec()+'</span></span></button>').join('');
@@ -164,7 +167,7 @@ $('dailyBtn').onclick=()=>{sfx('click');withIntro('daily',()=>{const dy=dailyInf
 const MODE_NAMES={short:'Run corta',long:'Run lunga',inf:'Infinita'};
 function ownedEmp(){return TOWER_KEYS.filter(k=>save.emp[k])}
 function openSetup(mode){pending={mode,mgr:save.mgr[save.mgrSel]?save.mgrSel:'polpo',deck:(save.deck||[]).filter(k=>save.emp[k])};
-  if(pending.deck.length<4)pending.deck=ownedEmp().slice(0,8);hideAll();$('setupMode').textContent=MODE_NAMES[mode];renderSetup();show('setup')}
+  if(pending.deck.length<5)pending.deck=ownedEmp().slice(0,8);hideAll();$('setupMode').textContent=MODE_NAMES[mode];renderSetup();show('setup')}
 function renderSetup(){const ml=$('mgrList');ml.innerHTML='';
   for(const k of MANAGER_KEYS){const m=MANAGERS[k],own=!!save.mgr[k];const b=document.createElement('button');b.className='mgr'+(pending.mgr===k?' sel':'')+(own?'':' locked');
     b.innerHTML='<img alt="" src="'+ICONS.m[k]+'"><span class="mn">'+m.name+'</span><span class="md">'+(own?m.info:'Bloccato: '+(m.unlock.type==='buy'?'si compra nel Bistrot ('+m.unlock.price+' perle)':m.unlock.text))+'</span>';
@@ -172,9 +175,9 @@ function renderSetup(){const ml=$('mgrList');ml.innerHTML='';
   const dl=$('deckList');dl.innerHTML='';for(const k of ownedEmp()){const d=TOWERS[k],on=pending.deck.includes(k);const b=document.createElement('button');b.className='dk'+(on?' on':'');
     b.innerHTML='<span class="rar" style="background:var('+RAR[d.rar].c+')"></span><span class="lv">Lv'+save.emp[k]+'</span><img alt="" src="'+ICONS.t[k]+'"><span class="nm">'+d.name+'</span>';
     b.onclick=()=>{sfx('click');if(on)pending.deck=pending.deck.filter(x=>x!==k);else if(pending.deck.length<8)pending.deck.push(k);else{toast('Massimo 8 nel mazzo');return}renderSetup()};dl.appendChild(b)}
-  $('deckCount').textContent='('+pending.deck.length+'/8)';$('setupGo').disabled=pending.deck.length<4}
+  $('deckCount').textContent='('+pending.deck.length+'/8)';$('setupGo').disabled=pending.deck.length<5}
 $('setupBack').onclick=()=>{sfx('click');showMenu()};
-$('setupGo').onclick=()=>{if(pending.deck.length<4){toast('Servono almeno 4 dipendenti');return}sfx('click');save.deck=pending.deck.slice();save.mgrSel=pending.mgr;writeSave();hideAll();shopKey='';startDefense(pending.mode,pending.mgr,pending.deck)};
+$('setupGo').onclick=()=>{if(pending.deck.length<5){toast('Servono almeno 5 dipendenti');return}sfx('click');save.deck=pending.deck.slice();save.mgrSel=pending.mgr;writeSave();hideAll();shopKey='';startDefense(pending.mode,pending.mgr,pending.deck)};
 function ownedMon(){return MONSTER_KEYS.filter(k=>save.mon[k])}
 function openMSetup(){pending={mode:'monster',mdeck:(save.monDeck||[]).filter(k=>save.mon[k])};if(pending.mdeck.length<3)pending.mdeck=ownedMon().slice(0,8);hideAll();renderMSetup();show('msetup')}
 function renderMSetup(){const dl=$('mdeckList');dl.innerHTML='';for(const k of ownedMon()){const d=ENEMIES[k],on=pending.mdeck.includes(k);const b=document.createElement('button');b.className='dk'+(on?' on':'');

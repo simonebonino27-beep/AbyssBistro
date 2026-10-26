@@ -8,7 +8,7 @@ const TOWERS={
   squalo:{name:'Squalo',full:'Squalo buttafuori',cost:70,range:58,dmg:26,rate:.85,rar:'comune',kind:'bite',info:'Morde chi passa troppo vicino',joke:'Lista nera lunga quanto l\'oceano.'},
   rana:{name:'Rana faro',full:'Rana pescatrice faro',cost:60,range:100,dmg:0,rate:1,rar:'comune',kind:'light',info:'Illumina e attira: chi è nella luce prende +15% danni',joke:'L\'unica luce in fondo al tunnel. Ed è affamata.'},
   sardine:{name:'Sardine',full:'Sardine in brigata',cost:65,range:72,dmg:3.8,rate:.25,rar:'comune',kind:'swarm',info:'Sciame che morde a raffica',joke:'Dieci stipendi da fame, un solo cervello.'},
-  polipetto:{name:'Stagista',full:'Polipetto stagista',cost:40,range:85,dmg:10,rate:.9,rar:'comune',kind:'random',info:'Effetti casuali, a volte geniali',joke:'Primo giorno. Terzo incendio.'},
+  polipetto:{name:'Stagista',full:'Polipetto stagista',cost:45,range:85,dmg:10,rate:.9,rar:'comune',kind:'random',info:'Effetti casuali, a volte geniali',joke:'Primo giorno. Terzo incendio.'},
   spada:{name:'Pesce spada',full:'Pesce spada cassiere',cost:90,range:125,dmg:22,rate:1.6,rar:'noncomune',kind:'pierce',info:'Colpo perforante in linea retta',joke:'Lo scontrino lo fa a fette.'},
   medusa:{name:'Medusa',full:'Medusa cameriera',cost:85,range:80,dmg:8,rate:1.2,rar:'noncomune',kind:'chain',info:'Fulmina a catena e rallenta',joke:'200 coperti, zero voglia.'},
   gamberetto:{name:'Gamberetto',full:'Gamberetto pistola',cost:80,range:75,dmg:9,rate:2.4,rar:'noncomune',kind:'stun',info:'Bolla sonica: stordisce un\'area',joke:'Piccolo, rumoroso, illegale.'},
@@ -20,33 +20,48 @@ const TOWERS={
   ostrica:{name:'Ostrica',full:'Ostrica cassaforte',cost:120,range:50,dmg:0,rate:1,rar:'raro',kind:'bank',info:'Produce perle a fine ondata. Va protetta',joke:'Ha una perla. Non te la dà.'},
   manta:{name:'Manta',full:'Razza manta delivery',cost:140,range:56,dmg:30,rate:.35,rar:'epico',kind:'patrol',info:'Gira in tondo e travolge chi incrocia',joke:'Consegna in 30 secondi o il cliente muore.'},
   paguro:{name:'Paguro',full:'Paguro traslocatore',cost:130,range:100,dmg:24,rate:1,rar:'epico',kind:'mobile',info:'Cambia piazzola e attacco da solo',joke:'Ha cambiato 40 conchiglie. Nessuna era casa.'},
-  balena:{name:'Balena',full:'Balena pasticcera',cost:300,range:112,dmg:230,rate:8,rar:'leggendario',kind:'gulp',info:'Inghiotte tutto quello che ha davanti',joke:'Dessert: chiunque sia in sala.'}
+  balena:{name:'Balena',full:'Balena pasticcera',cost:300,range:112,dmg:230,rate:8,rar:'leggendario',kind:'gulp',info:'Inghiotte tutto quello che ha davanti',joke:'Dessert: chiunque sia in sala.'},
+  piranha:{name:'Piranha',full:'Piranha assaggiatore',cost:60,range:56,dmg:6,rate:.45,rar:'comune',kind:'shred',info:'Morsi a raffica: chi viene morso prende +25% danni da tutti',joke:'Assaggia tutto. Anche te.'},
+  aragostina:{name:'Pizzaiola',full:'Aragostina pizzaiola',cost:85,range:92,dmg:15,rate:1.4,rar:'noncomune',kind:'splash',splash:34,info:'Lancia pizze bollenti che colpiscono tutti attorno',joke:'Margherita, quattro formaggi, granata.'},
+  gelataio:{name:'Gelataio',full:'Pesce ghiaccio gelataio',cost:105,range:62,dmg:2,rate:.5,rar:'raro',kind:'aura',info:'Aura gelata: chi entra rallenta del 30% e si congela piano piano',joke:'Il gusto del mese è "ipotermia".'},
+  macellaio:{name:'Macellaio',full:'Pesce sega macellaio',cost:115,range:66,dmg:26,rate:1.1,rar:'raro',kind:'exec',info:'Fa il triplo dei danni a chi ha meno di un terzo di vita',joke:'Taglio fine, taglio grosso, taglio definitivo.'},
+  artificiere:{name:'Artificiere',full:'Pesce scorpione artificiere',cost:150,range:96,dmg:75,rate:4.5,rar:'epico',kind:'mine',info:'Semina fino a 3 mine sul sentiero: esplodono quando ci passa qualcuno',joke:'In cucina da tre giorni. La cucina ha tre crateri.'},
+  delfino:{name:'Delfino',full:'Delfino maître',cost:140,range:84,dmg:24,rate:2.4,rar:'epico',kind:'push',info:'Rispedisce indietro i due mostri più avanti: "il loro tavolo non è pronto"',joke:'«Ha prenotato?» Nessuno ha mai prenotato.'},
+  giocoliere:{name:'Giocoliere',full:'Polpo giocoliere',cost:260,range:104,dmg:22,rate:1.05,rar:'leggendario',kind:'multi',multi:6,info:'Lancia sei nigiri insieme, a sei mostri diversi',joke:'Otto braccia, sei nigiri, zero pause pranzo.'},
+  wasabi:{name:'Bomba wasabi',full:'Bomba al wasabi',cost:55,range:46,dmg:90,rate:0,rar:'comune',kind:'spell',spell:'boom',info:'Incantesimo: tocca il sentiero, esplode e fa 90 danni attorno',joke:'Piccante. Molto. Troppo.'},
+  rete:{name:'Rete',full:'Rete da pesca',cost:45,range:56,dmg:10,rate:0,rar:'comune',kind:'spell',spell:'net',info:'Incantesimo: rallenta del 60% chi è dentro per 6 secondi e lo punge',joke:'Pescato fresco. Pescatore anche.'},
+  onda:{name:'Onda gelata',full:'Onda di sorbetto',cost:70,range:62,dmg:15,rate:0,rar:'raro',kind:'spell',spell:'freeze',info:'Incantesimo: congela tutti nel raggio per 2,5 secondi',joke:'Brain freeze per tutto il banco.'},
+  caffe:{name:'Pausa caffè',full:'Pausa caffè',cost:90,range:0,dmg:0,rate:0,rar:'epico',kind:'spell',spell:'rush',info:'Incantesimo: per 7 secondi tutti i dipendenti attaccano il 60% più veloce',joke:'Il quarto espresso è sempre una buona idea.'}
 };
 const TOWER_KEYS=Object.keys(TOWERS);
+const isSpell=k=>!!(TOWERS[k]&&TOWERS[k].spell);
+const EMP_KEYS=TOWER_KEYS.filter(k=>!isSpell(k));
 
 /* nemici: armor = danni ridotti salvo esplosioni; stealth = visibile solo in luce o da vicino; fly = vola sopra i blocchi */
 const ENEMIES={
-  ghiozzo:{name:'Ghiozzo scroccone',hp:32,speed:38,reward:6,dmg:1,r:11,rar:'comune',mcost:8,info:'Vuole mangiare gratis. In tanti.'},
-  aringa:{name:'Banco di aringhe',hp:14,speed:72,reward:3,dmg:1,r:8,rar:'comune',mcost:20,group:3,info:'Velocissime, in gruppo da 3'},
-  lumaca:{name:'Lumaca di mare golosa',hp:150,speed:19,reward:16,dmg:2,r:13,rar:'comune',mcost:24,info:'Lenta e piena di vita'},
-  isopode:{name:'Isopode corazzato',hp:90,speed:28,reward:12,dmg:1,r:12,rar:'noncomune',mcost:28,armor:1,info:'Corazza: -65% danni, tranne le esplosioni'},
-  volante:{name:'Pesce volante saltafila',hp:40,speed:62,reward:8,dmg:1,r:10,rar:'noncomune',mcost:18,fly:1,info:'Vola sopra chi blocca e sopra le trappole'},
-  ladro:{name:'Granchio ladro',hp:60,speed:46,reward:10,dmg:1,r:11,rar:'noncomune',mcost:20,info:'Ruba perle all\'Ostrica e scappa'},
-  stella:{name:'Stella marina divisibile',hp:70,speed:32,reward:10,dmg:1,r:12,rar:'noncomune',mcost:30,info:'Morendo si divide in 5 stelline'},
+  ghiozzo:{name:'Ghiozzo scroccone',hp:32,speed:38,reward:6,dmg:1,r:11,rar:'comune',mcost:1,info:'Vuole mangiare gratis. In tanti.'},
+  aringa:{name:'Banco di aringhe',hp:14,speed:72,reward:3,dmg:1,r:8,rar:'comune',mcost:2,group:3,info:'Velocissime, in gruppo da 3'},
+  lumaca:{name:'Lumaca di mare golosa',hp:150,speed:19,reward:16,dmg:2,r:13,rar:'comune',mcost:3,info:'Lenta e piena di vita'},
+  isopode:{name:'Isopode corazzato',hp:90,speed:28,reward:12,dmg:1,r:12,rar:'noncomune',mcost:3,armor:1,info:'Corazza: -65% danni, tranne le esplosioni'},
+  volante:{name:'Pesce volante saltafila',hp:40,speed:62,reward:8,dmg:1,r:10,rar:'noncomune',mcost:2,fly:1,info:'Vola sopra chi blocca e sopra le trappole'},
+  ladro:{name:'Granchio ladro',hp:60,speed:46,reward:10,dmg:1,r:11,rar:'noncomune',mcost:2,info:'Ruba perle all\'Ostrica e scappa'},
+  stella:{name:'Stella marina divisibile',hp:70,speed:32,reward:10,dmg:1,r:12,rar:'noncomune',mcost:3,info:'Morendo si divide in 5 stelline'},
   stellina:{name:'Stellina',hp:12,speed:56,reward:2,dmg:1,r:6,rar:'comune',mcost:0,hidden:1,info:''},
-  murena:{name:'Murena sgattaiolante',hp:70,speed:52,reward:12,dmg:1,r:12,rar:'raro',mcost:26,stealth:1,info:'Invisibile: si vede solo in luce o da vicino'},
-  chirurgo:{name:'Pesce chirurgo critico',hp:110,speed:30,reward:14,dmg:1,r:12,rar:'raro',mcost:32,info:'Rallenta l\'attacco dei dipendenti vicini'},
-  riccio:{name:'Riccio rotolante',hp:130,speed:30,reward:14,dmg:2,r:12,rar:'raro',mcost:36,info:'Corazzato davanti: colpiscilo di lato o da dietro'},
-  nudi:{name:'Nudibranco tossico',hp:90,speed:26,reward:12,dmg:1,r:12,rar:'raro',mcost:28,info:'La sua scia dà la nausea ai dipendenti'},
-  vipera:{name:'Pesce vipera spegnilampade',hp:100,speed:40,reward:16,dmg:1,r:12,rar:'epico',mcost:32,info:'Spegne le luci vicine per qualche secondo'},
-  martello:{name:'Squalo martello affamato',hp:200,speed:34,reward:20,dmg:2,r:14,rar:'epico',mcost:44,noSlow:1,info:'Carica a scatti, ignora i rallentamenti'},
-  rivale:{name:'Polpo rivale travestito',hp:130,speed:36,reward:22,dmg:2,r:13,rar:'epico',mcost:40,info:'Travestito da dipendente per metà sentiero, poi si scopre'},
-  reAragosta:{name:'Re Aragosta',title:'Critico gastronomico',hp:1900,speed:14,reward:120,dmg:20,r:24,rar:'leggendario',boss:1,mcost:60,info:'Boccia un dipendente ogni 6 secondi'},
-  granchioReale:{name:'Granchio reale',title:'Ingordo',hp:2600,speed:13,reward:150,dmg:20,r:26,rar:'leggendario',boss:1,mcost:66,info:'Mangia i piatti trappola e cresce, schiaccia i dipendenti'},
-  kraken:{name:'Kraken del relitto',title:'Mille braccia',hp:3300,speed:12,reward:180,dmg:20,r:26,rar:'leggendario',boss:1,mcost:72,info:'Tentacoli che bloccano dipendenti a caso'},
-  lanternaGigante:{name:'Pesce lanterna gigante',title:'Signore del buio',hp:3600,speed:15,reward:200,dmg:20,r:24,rar:'leggendario',boss:1,stealthBoss:1,mcost:78,info:'Spegne tutto a ondate: si vede solo la sua esca'},
-  leviatano:{name:'Leviatano',title:'Due corsie di serpente',hp:5000,speed:10,reward:240,dmg:20,r:30,rar:'leggendario',boss:1,mcost:85,info:'Travolge i dipendenti accanto al sentiero'},
-  megalodonte:{name:'Megalodonte',title:'Fine del menu',hp:6400,speed:18,reward:300,dmg:20,r:28,rar:'leggendario',boss:1,mcost:95,noSlow:1,info:'Carica, morde i dipendenti, sotto il 50% si infuria'}
+  murena:{name:'Murena sgattaiolante',hp:70,speed:52,reward:12,dmg:1,r:12,rar:'raro',mcost:3,stealth:1,info:'Invisibile: si vede solo in luce o da vicino'},
+  chirurgo:{name:'Pesce chirurgo critico',hp:110,speed:30,reward:14,dmg:1,r:12,rar:'raro',mcost:4,info:'Rallenta l\'attacco dei dipendenti vicini'},
+  riccio:{name:'Riccio rotolante',hp:130,speed:30,reward:14,dmg:2,r:12,rar:'raro',mcost:4,info:'Corazzato davanti: colpiscilo di lato o da dietro'},
+  nudi:{name:'Nudibranco tossico',hp:90,speed:26,reward:12,dmg:1,r:12,rar:'raro',mcost:3,info:'La sua scia dà la nausea ai dipendenti'},
+  vipera:{name:'Pesce vipera spegnilampade',hp:100,speed:40,reward:16,dmg:1,r:12,rar:'epico',mcost:4,info:'Spegne le luci vicine per qualche secondo'},
+  martello:{name:'Squalo martello affamato',hp:200,speed:34,reward:20,dmg:2,r:14,rar:'epico',mcost:5,noSlow:1,info:'Carica a scatti, ignora i rallentamenti'},
+  rivale:{name:'Polpo rivale travestito',hp:130,speed:36,reward:22,dmg:2,r:13,rar:'epico',mcost:4,info:'Travestito da dipendente per metà sentiero, poi si scopre'},
+  pulitore:{name:'Pesce pulitore',hp:110,speed:30,reward:16,dmg:1,r:11,rar:'raro',mcost:3,info:'Cura i mostri vicini, 12 vita al secondo'},
+  kamikaze:{name:'Pesce palla kamikaze',hp:80,speed:44,reward:14,dmg:2,r:12,rar:'epico',mcost:4,info:'Morendo esplode e addormenta i dipendenti vicini'},
+  reAragosta:{name:'Re Aragosta',title:'Critico gastronomico',hp:1900,speed:14,reward:120,dmg:20,r:24,rar:'leggendario',boss:1,mcost:6,info:'Boccia un dipendente ogni 6 secondi'},
+  granchioReale:{name:'Granchio reale',title:'Ingordo',hp:2600,speed:13,reward:150,dmg:20,r:26,rar:'leggendario',boss:1,mcost:6,info:'Mangia i piatti trappola e cresce, schiaccia i dipendenti'},
+  kraken:{name:'Kraken del relitto',title:'Mille braccia',hp:3300,speed:12,reward:180,dmg:20,r:26,rar:'leggendario',boss:1,mcost:7,info:'Tentacoli che bloccano dipendenti a caso'},
+  lanternaGigante:{name:'Pesce lanterna gigante',title:'Signore del buio',hp:3600,speed:15,reward:200,dmg:20,r:24,rar:'leggendario',boss:1,stealthBoss:1,mcost:7,info:'Spegne tutto a ondate: si vede solo la sua esca'},
+  leviatano:{name:'Leviatano',title:'Due corsie di serpente',hp:5000,speed:10,reward:240,dmg:20,r:30,rar:'leggendario',boss:1,mcost:8,info:'Travolge i dipendenti accanto al sentiero'},
+  megalodonte:{name:'Megalodonte',title:'Fine del menu',hp:6400,speed:18,reward:300,dmg:20,r:28,rar:'leggendario',boss:1,mcost:9,noSlow:1,info:'Carica, morde i dipendenti, sotto il 50% si infuria'}
 };
 const MONSTER_KEYS=Object.keys(ENEMIES).filter(k=>!ENEMIES[k].hidden);
 const BOSS_KEYS=MONSTER_KEYS.filter(k=>ENEMIES[k].boss);
@@ -57,7 +72,11 @@ const MANAGERS={
   narvalo:{name:'Capitan Narvalo',rar:'raro',info:'Le maledizioni escono 3 volte più spesso e danno il 50% in più',unlock:{type:'boss',boss:'kraken',text:'Batti il Kraken del relitto'}},
   gamberi:{name:'Fratelli Gamberi',rar:'epico',info:'Due mani di carte: scegli una carta da ognuna',unlock:{type:'buy',price:1100}},
   nonno:{name:'Nonno Capitano',rar:'raro',info:'Il suo sottomarino lancia un siluro ogni 6 secondi',unlock:{type:'floor',floor:4,text:'Arriva al piano 5, Camini vulcanici'}},
-  squalo:{name:'Squalo Squalo',rar:'leggendario',info:'Ogni colpo ha il 15% di critico x2.5',unlock:{type:'boss',boss:'megalodonte',text:'Batti il Megalodonte'}}
+  squalo:{name:'Squalo Squalo',rar:'leggendario',info:'Ogni colpo ha il 15% di critico x2.5',unlock:{type:'boss',boss:'megalodonte',text:'Batti il Megalodonte'}},
+  contessa:{name:'Contessa Medusa',rar:'noncomune',info:'Tutti i dipendenti attaccano il 15% più veloce, ma il bancone ha 5 vita in meno',unlock:{type:'buy',price:600}},
+  banchiere:{name:'Granchio Banchiere',rar:'raro',info:'Interessi: a fine ondata +10% delle perle che hai (massimo 60)',unlock:{type:'buy',price:900}},
+  seppia:{name:'Mamma Seppia',rar:'epico',info:'Ogni ondata il primo mostro che arriva al bancone viene rispedito al via con uno scappellotto',unlock:{type:'boss',boss:'granchioReale',text:'Batti il Granchio reale'}},
+  tsunami:{name:'Chef Tsunami',rar:'leggendario',info:'Ogni 22 secondi un\'onda rispedisce indietro tutti i mostri e fa 25 danni',unlock:{type:'boss',boss:'leviatano',text:'Batti il Leviatano'}}
 };
 const MANAGER_KEYS=Object.keys(MANAGERS);
 
@@ -78,7 +97,7 @@ const FLOORS=[
 ];
 
 /* nemici disponibili per profondità */
-const POOL=[['ghiozzo','aringa','lumaca'],['isopode','volante','ladro'],['stella','murena','chirurgo'],['riccio','nudi','vipera'],['martello','rivale'],[]];
+const POOL=[['ghiozzo','aringa','lumaca'],['isopode','volante','ladro'],['stella','murena','chirurgo','pulitore'],['riccio','nudi','vipera','kamikaze'],['martello','rivale'],[]];
 function poolFor(depth){let p=[];for(let i=0;i<=Math.min(depth,5);i++)p=p.concat(POOL[i]);return p}
 
 /* ===== carte della difesa ===== */
@@ -127,11 +146,11 @@ const MCARDS=[
   {id:'cost',type:'Mutazione',name:'Menu fisso',rar:'noncomune',joke:'Tutto a 9,90. Anche i mostri.',ok:s=>s.mm.cost>.5,eff:s=>'Costo dei mostri: -'+Math.round((1-s.mm.cost)*100)+'% → -'+Math.round((1-s.mm.cost*.8)*100)+'%',apply:s=>{s.mm.cost*=.8}},
   {id:'bite',type:'Mutazione',name:'Morso al bancone',rar:'raro',joke:'Il legno è la parte migliore.',eff:s=>'Danno al bancone: +'+pct(s.mm.bite)+'% → +'+pct(s.mm.bite*1.5)+'%',apply:s=>{s.mm.bite*=1.5}},
   {id:'panic',type:'Sabotaggio',name:'Panico in cucina',rar:'raro',joke:'Qualcuno ha urlato "ispezione sanitaria".',eff:s=>'Velocità d\'attacco della difesa: -'+Math.round((1-s.ai.rate)*100)+'% → -'+Math.round((1-s.ai.rate*.85)*100)+'%',apply:s=>{s.ai.rate*=.85}},
-  {id:'snack',type:'Mutazione',name:'Antipasto',rar:'comune',joke:'Un aperitivo prima della strage.',eff:s=>'Fame massima: '+s.hungerMax+' → '+(s.hungerMax+25),apply:s=>{s.hungerMax+=25}},
+  {id:'snack',type:'Mutazione',name:'Antipasto',rar:'comune',joke:'Un aperitivo prima della strage.',eff:s=>'Fame massima: '+s.hungerMax+' → '+(s.hungerMax+1),apply:s=>{s.hungerMax+=1}},
   {id:'strike',type:'Sabotaggio',name:'Sciopero del personale',rar:'epico',joke:'Il sindacato dei granchi incrocia le chele.',eff:s=>'La difesa parte con '+Math.round(s.ai.startCut*100)+'% → '+Math.round(s.ai.startCut*70)+'% del budget',apply:s=>{s.ai.startCut*=.7}}
 ];
 function monCardFor(k){const d=ENEMIES[k];const owned=!!save.mon[k];return{id:'mon_'+k,type:'Nuovo mostro',name:d.name,rar:d.rar,icon:k,mon:1,joke:d.info,
-  eff:()=>(owned?'Entra nel mazzo':'TROVATO! Sbloccato per sempre')+' · costo '+d.mcost+' fame',apply:s=>{if(!save.mon[k]){save.mon[k]=1;writeSave();s.found.push(k)}s.mdeck.push(k);s.mpile.unshift(k)}}}
+  eff:()=>(owned?'Entra nel mazzo':'TROVATO! Sbloccato per sempre')+' · costa '+d.mcost+' fame',apply:s=>{if(!save.mon[k]){save.mon[k]=1;writeSave();s.found.push(k)}s.mdeck.push(k);s.mpile.unshift(k)}}}
 function pickMCards(s,n){const pool=MCARDS.filter(c=>!c.ok||c.ok(s)).map(c=>Object.assign({},c));
   for(const k of shuffle(MONSTER_KEYS.filter(k=>!ENEMIES[k].boss&&!s.mdeck.includes(k))).slice(0,3))pool.push(monCardFor(k));
   const out=[];while(out.length<n&&pool.length){const tot=pool.reduce((a,c)=>a+RAR[c.rar].w,0);let r=rnd()*tot,i=0;for(;i<pool.length;i++){r-=RAR[pool[i].rar].w;if(r<=0)break}out.push(pool.splice(Math.min(i,pool.length-1),1)[0])}return out}
@@ -149,7 +168,7 @@ const monLvlCost=(k,l)=>Math.round(RAR[ENEMIES[k].rar].price*.25*l);
 const LVL_MAX=5;
 /* sfida del giorno: stessa per tutti nello stesso giorno */
 function dailyInfo(){const d=new Date(),key=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(),R=rng(key*7+3);
-  const mgr=MANAGER_KEYS[Math.floor(R()*MANAGER_KEYS.length)];const pool=TOWER_KEYS.slice();const deck=[];while(deck.length<6){const k=pool.splice(Math.floor(R()*pool.length),1)[0];deck.push(k)}
+  const mgr=MANAGER_KEYS[Math.floor(R()*MANAGER_KEYS.length)];const pool=EMP_KEYS.slice();const deck=[];while(deck.length<6){const k=pool.splice(Math.floor(R()*pool.length),1)[0];deck.push(k)}
   const curses=CARDS.filter(c=>c.curse&&c.id!=='overbook');const curse=curses[Math.floor(R()*curses.length)];
   const mesi=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
   return{key,mgr,deck,curse,label:d.getDate()+' '+mesi[d.getMonth()]}}

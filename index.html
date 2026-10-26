@@ -30,7 +30,8 @@
     <button class="hbtn" id="pauseBtn" aria-label="Pausa"><span class="bars"></span><span class="bars"></span></button>
   </div>
   <div id="toolInfo" hidden></div>
-  <div id="oppView" hidden><div class="oppTop"><b id="oppName">Avversario</b><span id="oppInfo"></span></div><div class="oppHp"><i id="oppHpF"></i></div><canvas id="oppCv" aria-label="Partita dell'avversario in diretta"></canvas><span class="oppEmo" id="oppEmo"></span></div>
+  <div id="oppView" hidden><div class="oppTop"><b id="oppName">Avversario</b><span id="oppInfo"></span></div><div class="oppHp"><i id="oppHpF"></i></div><canvas id="oppCv" aria-label="Partita dell'avversario in diretta"></canvas></div>
+  <span class="oppEmo" id="oppEmo"></span>
   <div id="emoBar" hidden><button data-e="😂">😂</button><button data-e="😡">😡</button><button data-e="👍">👍</button><button data-e="🦈">🦈</button></div>
   <span class="myEmo" id="myEmo"></span>
   <div id="toast" role="status"></div>
@@ -95,8 +96,8 @@
           <div class="fcode">Il tuo codice amico <button class="ghost slim" id="copyCode"><b id="myCode">--------</b></button></div>
           <div class="sectT">In diretta</div>
           <div class="pvpGrid">
-            <button class="pvpc live" id="liveGD"><img alt="" id="lvI1"><b>Duello dei gestori</b><span>Difendi il tuo gestore e manda mostri all'altro</span></button>
-            <button class="pvpc live" id="liveRC"><img alt="" id="lvI2"><b>Scalata</b><span>Stessi abissi, uno accanto all'altro: chi resiste di più</span></button>
+            <button class="pvpc live" id="liveGD"><img alt="" id="lvI1"><b>Arena</b><span>Come Clash Royale: due corsie, il tuo gestore in basso e il suo in alto</span></button>
+            <button class="pvpc live" id="liveRC"><img alt="" id="lvI2"><b>Affiancata</b><span>Gestori uno accanto all'altro, due sentieri: chi sopravvive di più</span></button>
           </div>
           <div class="pasteBox"><input id="roomIn" maxlength="4" placeholder="Codice stanza (4 lettere)" autocomplete="off" spellcheck="false" autocapitalize="characters"><button class="big sm" id="roomJoin">Entra</button></div>
           <div class="sectT">Amici</div>
@@ -154,7 +155,7 @@
       <div class="sect">Gestore</div>
       <div class="mgrs" id="mgrList"></div>
       <div class="sect">Mazzo <span id="deckCount"></span></div>
-      <p class="hint">Scegli da 4 a 8 dipendenti. In partita ne hai 3 in mano: quello che usi torna in fondo al mazzo e ne entra un altro a caso. Altri si trovano nelle carte durante la run.</p>
+      <p class="hint">Scegli da 5 a 8 dipendenti. In partita ne hai 4 in mano, come in Clash Royale: quello che usi va in fondo al mazzo ed entra il prossimo in fila (lo vedi a sinistra). Altri si trovano nelle carte durante la run.</p>
       <div class="deck" id="deckList"></div>
       <div class="rowbtns"><button class="ghost" id="setupBack">Indietro</button><button class="big" id="setupGo">Apri il bistrot</button></div>
     </div>
@@ -340,6 +341,7 @@
 <script src="js/core.js"></script>
 <script src="js/data.js"></script>
 <script src="js/art.js"></script>
+<script src="js/art2.js"></script>
 <script src="js/world.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>

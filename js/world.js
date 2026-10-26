@@ -27,13 +27,15 @@ const THEMES={
 };
 
 /* stato del piano corrente */
-const WORLD={fi:0,floor:null,theme:null,paths:[],slots:[],vents:[],kelp:[],decor:[],kelpPlants:[],glows:[],bg:document.createElement('canvas')};
+const LAY0={xmin:20,xmax:340,ymin:30,ymax:456,kit:[[180,490]],max:18};
+const nearKit=(x,y,r)=>WORLD.lay.kit.some(k=>Math.hypot(x-k[0],y-k[1])<r);
+const WORLD={lay:LAY0,fi:0,floor:null,theme:null,paths:[],slots:[],vents:[],kelp:[],decor:[],kelpPlants:[],glows:[],bg:document.createElement('canvas')};
 function distToPaths(x,y){let m=1e9;for(const p of WORLD.paths)m=Math.min(m,p.dist(x,y));return m}
 
-function slotOK(x,y){if(x<20||x>340||y<30||y>456)return false;
+function slotOK(x,y){const L=WORLD.lay;if(x<L.xmin||x>L.xmax||y<L.ymin||y>L.ymax)return false;
   for(let k=0;k<12;k++){const a=k/12*TAU;if(distToPaths(x+Math.cos(a)*19,y+Math.sin(a)*9)<22)return false}
   
-  if(Math.hypot(x-180,y-490)<72)return false;if(WORLD.vents.some(v=>Math.hypot(v[0]-x,v[1]-y)<40))return false;
+  if(nearKit(x,y,72))return false;if(WORLD.vents.some(v=>Math.hypot(v[0]-x,v[1]-y)<40))return false;
   if(WORLD.kelp.some(k=>Math.hypot(k[0]-x,k[1]-y)<k[2]+16))return false;
   for(const p of WORLD.paths){const s=p.pts[0];if(Math.hypot(x-s[0],y-s[1])<54)return false}return true}
 /* piazzole in fila lungo il sentiero: passo regolare, centrate nei corridoi stretti */
@@ -44,18 +46,19 @@ function genSlots(){const cand=[],samples=[];
       for(let t=28;t<=48;t+=2){const x=Math.round(bx+nx*side*t),y=Math.round(by+ny*side*t);if(slotOK(x,y)){cand.push({x,y,t});break}}}}
   for(const c of cand){let n=0;for(const q of samples)if(Math.hypot(q.x-c.x,q.y-c.y)<95)n++;c.n=n+hash2(c.x,c.y)-c.t*.15}
   cand.sort((a,b)=>b.n-a.n);const out=[];
-  for(const c of cand){if(out.length>=18)break;if(out.every(o=>Math.hypot(o.x-c.x,o.y-c.y)>=46))out.push({x:c.x,y:c.y,tower:null})}
+  for(const c of cand){if(out.length>=WORLD.lay.max)break;if(out.every(o=>Math.hypot(o.x-c.x,o.y-c.y)>=46))out.push({x:c.x,y:c.y,tower:null})}
   out.sort((a,b)=>a.y-b.y||a.x-b.x);return out}
 function freeAt(x,y,r){if(distToPaths(x,y)<r+22)return false;for(const s of WORLD.slots)if(Math.hypot(s.x-x,s.y-y)<r+20)return false;
-  if(Math.hypot(x-180,y-500)<r+85)return false;for(const p of WORLD.paths){const s=p.pts[0];if(Math.hypot(x-s[0],y-s[1])<r+60)return false}
+  if(nearKit(x,y+10,r+85))return false;for(const p of WORLD.paths){const s=p.pts[0];if(Math.hypot(x-s[0],y-s[1])<r+60)return false}
   for(const v of WORLD.vents)if(Math.hypot(x-v[0],y-v[1])<r+30)return false;
   for(const d of WORLD.decor)if(Math.hypot(d.x-x,d.y-y)<(d.r+r)*.85)return false;return true}
-function clearLine(x,y1,y2){for(let y=y2;y<=y1;y+=6){if(distToPaths(x,y)<20)return false;for(const s of WORLD.slots)if(Math.hypot(s.x-x,s.y-y)<24)return false;if(Math.hypot(x-180,y-490)<70)return false}return true}
+function clearLine(x,y1,y2){for(let y=y2;y<=y1;y+=6){if(distToPaths(x,y)<20)return false;for(const s of WORLD.slots)if(Math.hypot(s.x-x,s.y-y)<24)return false;if(nearKit(x,y,70))return false}return true}
 
-function loadFloor(fi){const F=FLOORS[fi],th=THEMES[F.id];
-  WORLD.fi=fi;WORLD.floor=F;WORLD.theme=th;WORLD.paths=F.paths.map(p=>new Path(p));WORLD.vents=(F.vents||[]).map(v=>[v[0],v[1]]);WORLD.ventT=(F.vents||[]).map((v,i)=>4+i*2.5);
+/* lay: campo speciale per il PvP (due cucine, colonne). Senza, il piano normale */
+function loadFloor(fi,lay){const F=lay&&lay.floor||FLOORS[fi],th=THEMES[F.id];WORLD.lay=lay||LAY0;
+  WORLD.fi=fi;WORLD.floor=F;WORLD.theme=th;WORLD.paths=F.paths.map(p=>new Path(p));WORLD.bgPaths=lay&&lay.bgPaths?lay.bgPaths.map(p=>new Path(p)):null;WORLD.vents=(F.vents||[]).map(v=>[v[0],v[1]]);WORLD.ventT=(F.vents||[]).map((v,i)=>4+i*2.5);
   WORLD.kelp=(F.kelp||[]).map(k=>k.slice());WORLD.slots=genSlots();WORLD.decor=[];WORLD.kelpPlants=[];WORLD.glows=[];
-  const R=rng(42+fi*977);
+  const R=rng(42+fi*977);const keepP=WORLD.paths;if(WORLD.bgPaths)WORLD.paths=keepP.concat(WORLD.bgPaths);
   for(const b of th.big)WORLD.decor.push({type:b[0],x:b[1],y:b[2],r:b[3],seed:Math.floor(R()*1e6)});
   for(const[type,n,rmin,rmax,inWorld]of th.decor){const box=inWorld?[0,0,360,560]:[-560,-460,920,1040];let k=0;
     for(let i=0;i<4000&&k<n;i++){const x=box[0]+R()*(box[2]-box[0]),y=box[1]+R()*(box[3]-box[1]),r=rmin+R()*(rmax-rmin);if(freeAt(x,y,r)){WORLD.decor.push({type,x,y,r,seed:Math.floor(R()*1e6)});k++}}}
@@ -64,7 +67,7 @@ function loadFloor(fi){const F=FLOORS[fi],th=THEMES[F.id];
     for(let k=0;k<n;k++){const x=d.x+(hash2(d.seed,k+3)-.5)*d.r,y=d.y-d.r*.3;let h=d.r*1.3+30+hash2(d.seed,k+5)*(th.kelp>=1?90:50);
       while(h>24&&!clearLine(x,y,y-h))h-=8;if(h>24)WORLD.kelpPlants.push({x,y,h,ph:hash2(d.seed,k+7)*6,w:2.6+hash2(d.seed,k)*1.8})}}
   if(th.kelp>=1)for(let i=0;i<60;i++){const x=-500+R()*1360,y=-400+R()*1400;if(x>-20&&x<380&&y>-20&&y<580)continue;WORLD.kelpPlants.push({x,y,h:60+R()*120,ph:R()*6,w:3+R()*2})}
-  WORLD.decor.sort((a,b)=>a.y-b.y);WORLD.kelpPlants.sort((a,b)=>a.y-b.y);
+  WORLD.paths=keepP;WORLD.decor.sort((a,b)=>a.y-b.y);WORLD.kelpPlants.sort((a,b)=>a.y-b.y);
   if(VW>1)buildBG()}
 
 /* ---------- oggetti del fondale ---------- */
@@ -152,15 +155,16 @@ function drawDeck(c){soft(c,186,520,96,30,.5);c.beginPath();c.roundRect(90,468,1
   for(let k=0;k<10;k++){c.fillStyle=k%2?'#563a25':'#5f412a';c.fillRect(90+k*18,468,18,82);L(c,90+k*18,468,90+k*18,550,'rgba(15,8,4,.7)',1);for(let j=0;j<3;j++){E(c,99+k*18,480+j*28+hash2(k,j)*8,1.2,1.2);c.fillStyle='#2a1a0c';c.fill()}}
   for(let k=0;k<120;k++){E(c,90+hash2(k,11)*180,468+hash2(k,12)*82,1+hash2(k,13)*2,.8);c.fillStyle='rgba(90,130,70,.35)';c.fill()}c.restore();
   c.beginPath();c.roundRect(90,468,180,82,10);c.strokeStyle=INK;c.lineWidth=2.2;c.stroke()}
-function buildBG(){const BG=WORLD.bg;BG.width=Math.max(1,Math.ceil(VW*DPR));BG.height=Math.max(1,Math.ceil(VH*DPR));const c=BG.getContext('2d');c.setTransform(SC*DPR,0,0,SC*DPR,OX*DPR,OY*DPR);
+function buildBG(){const keepP=WORLD.paths;if(WORLD.bgPaths)WORLD.paths=keepP.concat(WORLD.bgPaths);try{buildBG0()}finally{WORLD.paths=keepP}}
+function buildBG0(){const BG=WORLD.bg;BG.width=Math.max(1,Math.ceil(VW*DPR));BG.height=Math.max(1,Math.ceil(VH*DPR));const c=BG.getContext('2d');c.setTransform(SC*DPR,0,0,SC*DPR,OX*DPR,OY*DPR);
   const pad=6,x0=V.x0-pad,y0=V.y0-pad,w=V.w+pad*2,h=V.h+pad*2;let res=Math.min(1.6,SC*DPR*.65);res=Math.min(res,Math.sqrt(650000/(w*h)));
   c.imageSmoothingEnabled=true;c.drawImage(sandLayer(x0,y0,w,h,res),x0,y0,w,h);
   for(const p of WORLD.paths)for(const s of p.segs){const nx=-s.dy,ny=s.dx;for(const side of[-1,1])for(let d=4;d<s.len;d+=7+hash2(d+s.ax,side+5)*6){const px=s.ax+s.dx*d+nx*side*(19+hash2(d,side)*4),py=s.ay+s.dy*d+ny*side*(19+hash2(d,side)*4);if(distToPaths(px,py)<16)continue;const rr=1.6+hash2(d,side+9)*2.4;
     E(c,px+.8,py+1,rr,rr*.7);c.fillStyle='rgba(5,10,8,.35)';c.fill();E(c,px,py,rr,rr*.72);c.fillStyle=hash2(d,side+2)<.5?'#77786a':'#8f8a74';c.fill();E(c,px-rr*.3,py-rr*.25,rr*.4,rr*.25);c.fillStyle='rgba(255,255,255,.16)';c.fill()}}
-  drawDeck(c);
+  if(WORLD.lay.decks)WORLD.lay.decks(c);else drawDeck(c);
   const vis=d=>d.x+d.r*2.5>V.x0&&d.x-d.r*2.5<V.x1&&d.y+d.r*2.5>V.y0&&d.y-d.r*2.5<V.y1;
   for(const d of WORLD.decor)if(vis(d))DRAWD[d.type](c,d);
-  drawCaves(c);
+  if(!WORLD.lay.noCaves)drawCaves(c);
   c.fillStyle=WORLD.theme.tint;c.fillRect(V.x0,V.y0,V.w,V.h);
   const cx=V.x0+V.w/2,cy=V.y0+V.h/2;const vg=c.createRadialGradient(cx,cy,Math.min(V.w,V.h)*.38,cx,cy,Math.hypot(V.w,V.h)*.6);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(1,8,10,.62)');c.fillStyle=vg;c.fillRect(V.x0,V.y0,V.w,V.h)}
 

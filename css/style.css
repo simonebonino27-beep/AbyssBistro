@@ -23,7 +23,7 @@ canvas#game{position:absolute;left:0;top:0;display:block;touch-action:none}
 .heart{width:11px;height:11px;background:var(--danger);border-radius:3px 3px 0 3px;transform:rotate(45deg) scale(.9)}
 .pearl{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 18%,var(--pearl) 45%,#a8874a 100%);box-shadow:0 0 0 1.5px var(--ink);flex:none}
 .starI{width:13px;height:13px;background:var(--star);clip-path:polygon(50% 0,62% 36%,100% 38%,70% 60%,80% 100%,50% 76%,20% 100%,30% 60%,0 38%,38% 36%);flex:none}
-.fang{width:12px;height:12px;background:var(--toxic);clip-path:polygon(0 0,100% 0,70% 100%,50% 40%,30% 100%);flex:none}
+.fang{width:11px;height:14px;background:radial-gradient(circle at 40% 62%,#ffb0a8,#e0202e 50%,#7a0a12);clip-path:polygon(50% 0,84% 44%,96% 68%,82% 92%,50% 100%,18% 92%,4% 68%,16% 44%);flex:none;display:inline-block}
 #waveLbl{flex:1;min-width:0;overflow:hidden;justify-content:center;font-family:var(--display);font-size:17px;letter-spacing:.5px;color:var(--pearl)}
 .hbtn{flex:none;background:var(--tide);border:2px solid var(--ink);border-radius:10px;height:36px;min-width:38px;font-family:var(--display);font-size:19px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:3px}
 .bars{width:4px;height:14px;background:var(--foam);border-radius:1px}
@@ -457,7 +457,7 @@ input[type=range]{width:100%;accent-color:var(--coral)}
 #sendRow{display:flex;flex-direction:column;gap:4px}
 .sendHead{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--foam)}
 .fameBar{height:7px;background:var(--abyss);border:2px solid var(--ink);border-radius:5px;overflow:hidden}.fameBar i{display:block;height:100%;background:var(--toxic)}
-.sendBtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sendBtns{display:grid;grid-template-columns:36px repeat(4,minmax(0,1fr));gap:5px}
 .snd{display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-rows:auto auto;column-gap:5px;align-items:center;background:#2a1418;border:2px solid var(--danger);border-radius:10px;padding:4px 6px;text-align:left}
 .snd img{width:30px;height:30px;grid-row:1/3}
 .snd span{font-size:11px;font-weight:800;color:var(--foam);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -471,3 +471,32 @@ input[type=range]{width:100%;accent-color:var(--coral)}
 
 #toast{white-space:normal;text-align:center;max-width:88vw;width:max-content}
 .diag{font-size:11px;margin:-6px 0 0;text-align:left;font-family:ui-monospace,Menlo,monospace}
+
+#hungerFill{background:linear-gradient(90deg,#9e0f1c,#ff4f5e)!important}
+#hungerBar{background-image:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(0,0,0,.55) calc(10% - 2px) 10%)}
+
+/* mano da 4 + prossima */
+#shop{grid-template-columns:40px repeat(4,minmax(0,1fr))!important;gap:5px!important}
+#shop .emp{flex-direction:column!important;gap:0!important;padding:3px 2px 4px!important}
+#shop .emp img{width:40px;height:40px}
+#shop .emp .ntx{align-items:center!important}
+#shop .emp .nm{font-size:10.5px}
+.nextC{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:rgba(5,13,15,.6);border:2px dashed var(--mist);border-radius:10px;padding:2px}
+.nextC span{font-size:8px;font-weight:900;text-transform:uppercase;color:var(--mist);letter-spacing:.2px}
+.nextC img{width:30px;height:30px;opacity:.85}
+
+.oppEmo{z-index:4;top:12%!important;left:50%;margin-left:-17px}
+.snd.armed{background:#5a1a22;box-shadow:0 0 0 2px var(--pearl)}
+/* arena: barra compatta per vedere la propria cucina */
+body.arena #bar{padding-block:8px 6px}
+body.arena #barIn{gap:4px}
+body.arena .sendHead{display:none}
+body.arena .fameBar{height:9px;position:relative}
+body.arena .snd{grid-template-columns:26px minmax(0,1fr);padding:2px 4px;border-radius:9px}
+body.arena .snd img{width:26px;height:26px}
+body.arena .snd span{font-size:10px}
+body.arena #shop .emp{padding:1px 2px 2px!important}
+body.arena #shop .emp img{width:30px;height:30px}
+body.arena #shop .emp .nm{display:none}
+body.arena .nextC img{width:24px;height:24px}
+body.arena #actions .act{min-height:0;padding-block:4px}

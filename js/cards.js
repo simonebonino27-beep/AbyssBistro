@@ -71,14 +71,15 @@ $('packList').addEventListener('click',ev=>{const b=ev.target.closest('button');
 /* scheda del personaggio: statistiche da 1 a 100 */
 const st100=(v,max)=>Math.max(1,Math.min(100,Math.round(v/max*100)));
 const DPS=k=>{const d=TOWERS[k];return d.dmg?d.dmg/d.rate:0};
-const MAXDPS=Math.max(...TOWER_KEYS.map(DPS)),MAXRANGE=Math.max(...TOWER_KEYS.map(k=>TOWERS[k].range)),MAXCOST=Math.max(...TOWER_KEYS.map(k=>TOWERS[k].cost));
+const MAXDPS=Math.max(...EMP_KEYS.map(DPS)),MAXRANGE=Math.max(...EMP_KEYS.map(k=>TOWERS[k].range)),MAXCOST=Math.max(...EMP_KEYS.map(k=>TOWERS[k].cost));
 const NB=MONSTER_KEYS.filter(k=>!ENEMIES[k].boss),BS=MONSTER_KEYS.filter(k=>ENEMIES[k].boss);
 const mmax=(ks,f)=>Math.max(...ks.map(k=>f(ENEMIES[k])));
 function statsFor(kind,key){const lv=(kind==='emp'?save.emp:save.mon)[key]||1;
+  if(kind==='emp'&&isSpell(key)){const d=TOWERS[key],m=1+.1*(lv-1);return[['Raggio',st100(d.range||40,70),d.range?String(d.range):'tutto il campo'],['Potenza',st100((d.dmg||40)*m,90),d.dmg?Math.round(d.dmg*m)+' danni':'+60% velocità'],['Prezzo in partita',st100(d.cost,MAXCOST),d.cost+' perle']]}
   if(kind==='emp'){const d=TOWERS[key],m=1+.1*(lv-1),sup=!d.dmg;
     return[[sup?'Danno (supporto)':'Danno',sup?1:st100(DPS(key)*m,MAXDPS),sup?'non attacca':fmt(d.dmg*m)+' a colpo'],['Gittata',st100(d.range,MAXRANGE),String(d.range)],['Velocità d\'attacco',st100(1/d.rate,1/.25),'1 ogni '+d.rate+'s'],['Prezzo in partita',st100(d.cost,MAXCOST),d.cost+' perle']]}
   const d=ENEMIES[key],ks=d.boss?BS:NB,m=1+.12*(lv-1);
-  return[['Vita',st100(d.hp*m,mmax(ks,e=>e.hp)),Math.round(d.hp*m)+(d.boss?' (in difesa)':'')],['Velocità',st100(d.speed,mmax(MONSTER_KEYS,e=>e.speed)),String(d.speed)],['Morso al bancone',st100(d.dmg,mmax(ks,e=>e.dmg)),String(d.dmg)],['Fame',st100(d.mcost,100),d.mcost+' su 100'+(d.group?' · gruppo da '+d.group:'')]]}
+  return[['Vita',st100(d.hp*m,mmax(ks,e=>e.hp)),Math.round(d.hp*m)+(d.boss?' (in difesa)':'')],['Velocità',st100(d.speed,mmax(MONSTER_KEYS,e=>e.speed)),String(d.speed)],['Morso al bancone',st100(d.dmg,mmax(ks,e=>e.dmg)),String(d.dmg)],['Fame',st100(d.mcost,10),d.mcost+' su 10'+(d.group?' · gruppo da '+d.group:'')]]}
 function openCInfo(kind,key){const own=kind==='emp'?save.emp:kind==='mon'?save.mon:save.mgr,d=kind==='emp'?TOWERS[key]:kind==='mon'?ENEMIES[key]:MANAGERS[key],l=own[key];
   const img=kind==='emp'?ICONS.t[key]:kind==='mon'?ICONS.e[key]:ICONS.m[key],name=kind==='emp'?d.full:d.name+(d.title?' · '+d.title:'');
   let h='<div class="ciHead" style="--rc:var('+RAR[d.rar].c+')"><img alt="" src="'+img+'"><div><span class="chip" style="background:var('+RAR[d.rar].c+')">'+RAR[d.rar].n+'</span><b>'+name+'</b><span class="ciLv">'+(l?(kind==='mgr'?'Sbloccato':'Livello '+l+' di '+LVL_MAX):'Da trovare')+'</span></div></div><p class="ciInfo">'+d.info+'</p>';

@@ -14,17 +14,17 @@ function addFriend(name,patch){if(!name||name===save.name)return;const f=save.fr
 
 /* ---------- avvio delle partite PvP ---------- */
 function seededPicks(R,pool,n){const p=pool.slice(),out=[];while(out.length<n&&p.length)out.push(p.splice(Math.floor(R()*p.length),1)[0]);return out}
-function startDuelChef(seed,vs){rnd=rng(seed);const R=rng(seed+77),f=[0,0,1,2][Math.floor(R()*4)],deck=['granchio','squalo',...seededPicks(R,TOWER_KEYS.filter(k=>!['granchio','squalo','balena'].includes(k)),4)];
-  hideAll();shopKey='';S=newRun('def','duel',{mgr:'polpo',deck});S.duel={t:'cc',seed,vs:vs||null};S.floors=[f];S.perle+=100;S.pile=shuffle(deck.slice());S.hand[0]='granchio';S.pile.splice(S.pile.indexOf('granchio'),1);S.pile.push('granchio');for(let i=1;i<3;i++)S.hand[i]=drawCard();enterFloor(0)}
+function startDuelChef(seed,vs){rnd=rng(seed);const R=rng(seed+77),f=[0,0,1,2][Math.floor(R()*4)],deck=['granchio','squalo',...seededPicks(R,EMP_KEYS.filter(k=>!['granchio','squalo','balena'].includes(k)),4)];
+  hideAll();shopKey='';S=newRun('def','duel',{mgr:'polpo',deck});S.duel={t:'cc',seed,vs:vs||null};S.floors=[f];S.perle+=100;S.pile=shuffle(deck.slice());S.hand[0]='granchio';S.pile.splice(S.pile.indexOf('granchio'),1);S.pile.push('granchio');for(let i=1;i<HAND_N;i++)S.hand[i]=drawCard();enterFloor(0)}
 function startDuelMonster(seed,vs){rnd=rng(seed);const R=rng(seed+91),f=Math.floor(R()*6),mdeck=seededPicks(R,MONSTER_KEYS.filter(k=>!ENEMIES[k].boss),6);
-  hideAll();shopKey='';S=newRun('mon','mduel',{mdeck});S.duel={t:'mm',seed,vs:vs||null};S.floors=[f];S.mpile=shuffle(mdeck.slice());for(let i=0;i<3;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
-function startKitBuilder(f){rnd=Math.random;hideAll();shopKey='';S=newRun('def','kit',{deck:TOWER_KEYS.filter(k=>save.emp[k])});S.kitBuild=true;S.floors=[f];S.perle=1000;enterFloor(0)}
+  hideAll();shopKey='';S=newRun('mon','mduel',{mdeck});S.duel={t:'mm',seed,vs:vs||null};S.floors=[f];S.mpile=shuffle(mdeck.slice());for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
+function startKitBuilder(f){rnd=Math.random;hideAll();shopKey='';S=newRun('def','kit',{deck:EMP_KEYS.filter(k=>save.emp[k])});S.kitBuild=true;S.floors=[f];S.perle=1000;enterFloor(0)}
 function startKitAttack(kit){rnd=Math.random;const mdeck=(save.monDeck&&save.monDeck.length>=3?save.monDeck:MONSTER_KEYS.filter(k=>save.mon[k]).slice(0,8));hideAll();shopKey='';
-  S=newRun('mon','kitatk',{mdeck});S.kitAtk=kit;S.floors=[kit.f];S.mpile=shuffle(mdeck.slice());for(let i=0;i<3;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
+  S=newRun('mon','kitatk',{mdeck});S.kitAtk=kit;S.floors=[kit.f];S.mpile=shuffle(mdeck.slice());for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
 function placeKit(kit){for(const s of WORLD.slots)s.tower=null;S.towers=[];for(const[si,k,lv]of kit.tw){const sl=WORLD.slots[si];if(!sl||!TOWERS[k])continue;const t=makeTower(k,sl);t.lv=Math.max(1,Math.min(3,lv||1));t.spent=TOWERS[k].cost}
   S.noAI=true;S.ai.budget=0;S.ai.income=0;S.ai.dmg=1.15;S.baseMax=S.baseHp=30}
 function startArmyDefense(army){rnd=Math.random;const deck=save.deck&&save.deck.length>=4?save.deck:TOWER_KEYS.filter(k=>save.emp[k]).slice(0,8);const mgr=save.mgr[save.mgrSel]?save.mgrSel:'polpo';
-  hideAll();shopKey='';S=newRun('def','armydef',{mgr,deck});S.army=army;S.floors=[army.f];S.perle=200;S.pile=shuffle(deck.slice());for(let i=0;i<3;i++)S.hand[i]=drawCard();enterFloor(0)}
+  hideAll();shopKey='';S=newRun('def','armydef',{mgr,deck});S.army=army;S.floors=[army.f];S.perle=200;S.pile=shuffle(deck.slice());for(let i=0;i<HAND_N;i++)S.hand[i]=drawCard();enterFloor(0)}
 function armyWave(w){const seq=[];for(const[k,n]of S.army.a)for(let i=0;i<n;i++)seq.push(k);const per=Math.ceil(seq.length/3),part=seq.slice(w*per,(w+1)*per);
   const q=[];for(const k of part){const e=ENEMIES[k];if(e.group)for(let g=0;g<e.group;g++)q.push([k,g<e.group-1?.28:.7]);else q.push([k,e.boss?2.5:e.hp>=140?1.4:.8])}return q}
 /* punteggi */
@@ -80,10 +80,10 @@ Object.assign(MODE_INTRO,{
   pvpcc:{title:'Chef contro Chef',items:[['m:polpo','Giochi un piano con 4 ondate e il boss, con un mazzo deciso dal codice.'],['t:granchio','Il tuo amico riceve lo stesso piano, le stesse ondate e le stesse carte. Vince chi fa più punti.'],['e:ghiozzo','Punti: 1000 per ondata superata, più vita rimasta e perle guadagnate.']]},
   pvpmm:{title:'Mostro contro Mostro',items:[['e:kraken','Un round di Mostro affamato con mostri e piano decisi dal codice.'],['e:ghiozzo','L\'amico attacca la stessa cucina con gli stessi mostri. Vince chi fa più danni e mangia il bancone più in fretta.']]},
   pvpcm:{title:'Chef contro Mostro',items:[['t:balena','Costruisci la tua cucina con 1000 perle su un piano a scelta: dipendenti e livelli.'],['m:polpo','Crei il codice e lo mandi. Il tuo amico, da mostro, prova a divorarla in 2:30.'],['e:ladro','Lui ti rimanda il risultato: lo incolli qui e vedi com\'è andata.']]},
-  pvpmc:{title:'Mostro contro Chef',items:[['e:megalodonte','Prepari un\'orda di mostri con 600 di fame, boss compresi se li hai sbloccati.'],['t:squalo','Il tuo amico la affronta con il suo mazzo di dipendenti, in 3 ondate.'],['e:ghiozzo','Se lo mangi vinci tu. Lui ti rimanda il codice del risultato.']]}});
+  pvpmc:{title:'Mostro contro Chef',items:[['e:megalodonte','Prepari un\'orda di mostri con 60 di fame, boss compresi se li hai sbloccati.'],['t:squalo','Il tuo amico la affronta con il suo mazzo di dipendenti, in 3 ondate.'],['e:ghiozzo','Se lo mangi vinci tu. Lui ti rimanda il codice del risultato.']]}});
 
 /* ---------- costruttore dell'orda ---------- */
-let army={};const ARMY_BUDGET=600;
+let army={};const ARMY_BUDGET=60;
 const armyCost=()=>Object.entries(army).reduce((a,[k,n])=>a+ENEMIES[k].mcost*n,0);
 function openArmy(){hideAll();army={};renderArmy();show('armyOv')}
 function renderArmy(){$('armyFloor').textContent='Piano: '+FLOORS[pvpFloor].name;const used=armyCost();$('armyBudget').textContent=used+'/'+ARMY_BUDGET+' fame';$('armyFill').style.width=Math.min(100,used/ARMY_BUDGET*100)+'%';

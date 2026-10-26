@@ -79,7 +79,7 @@ async function friendAdd(q){q=(q||'').trim();if(!q)return;if(!NET.on){toast('Ser
 
 /* ---------- stanze per giocare in diretta ---------- */
 let ROOM=null;
-const LIVE_NAMES={gduel:'Duello dei gestori',race:'Scalata'};
+const LIVE_NAMES={arena:'Arena',side:'Affiancata',gduel:'Arena',race:'Affiancata'};
 const roomCode=()=>randId(4).replace(/[0-9]/g,c=>'ABCDEFGHJK'[+c]);
 function roomSend(o){if(!ROOM||!ROOM.ch)return;const R=ROOM;try{const p=R.ch.send({type:'broadcast',event:'m',payload:o});if(o.t!=='st'&&p&&p.then)p.then(r=>{R.dbg.sent=o.t+':'+r;roomDbg()},e=>{R.dbg.sent=o.t+':errore';roomDbg()})}catch(e){R.dbg.sent=o.t+':'+e.message;roomDbg()}}
 function roomDbg(){if(ROOM&&$('roomDbg'))$('roomDbg').textContent=(ROOM.host?'casa':'ospite')+' · '+ROOM.dbg.st+' · avversario '+(ROOM.peer?'sì':'no')+' · inviato '+(ROOM.dbg.sent||'-')+' · ricevuto '+(ROOM.dbg.got||'-')}
@@ -128,14 +128,14 @@ function onlineFriends(){return Object.values(save.friends).filter(f=>f.id&&ONLI
 
 /* ---------- scheda Amici: parte online ---------- */
 let boardTab='fr',clanView=null,clanCh=null;
-function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',rtOK&&dbOK);$('onlDiag').textContent=!NET.on?'':(dbOK?'Server ✓':'Server ✗'+(dbE?' ('+dbE+')':' (in attesa)'))+' · '+(rtOK?'Diretta ✓':'Diretta ✗'+(rtErr?' ('+rtErr+')':' (in attesa)'))+' · v8';$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
+function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',rtOK&&dbOK);$('onlDiag').textContent=!NET.on?'':(dbOK?'Server ✓':'Server ✗'+(dbE?' ('+dbE+')':' (in attesa)'))+' · '+(rtOK?'Diretta ✓':'Diretta ✗'+(rtErr?' ('+rtErr+')':' (in attesa)'))+' · v9';$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
   $('myCode').textContent=save.pid;$('myTr').textContent=save.trophies;
   const fr=Object.values(save.friends).filter(f=>f.id).sort((a,b)=>(ONLINE[b.id]?1:0)-(ONLINE[a.id]?1:0));
-  $('onlineList').innerHTML=fr.length?fr.map(f=>{const o=ONLINE[f.id];return'<div class="brow fr"><span class="odot'+(o?' on':'')+'"></span><span class="bn">'+esc(f.name)+(o&&o.st==='game'?' <i>in partita</i>':'')+'</span>'+(o&&o.st!=='game'?'<span class="frb"><button class="buy" data-ch="gduel" data-id="'+f.id+'">Duello</button><button class="buy alt" data-ch="race" data-id="'+f.id+'">Scalata</button></span>':'<span class="bs">'+(o?'':'offline')+'</span>')+'</div>'}).join(''):'<p class="hint">Aggiungi un amico col suo codice amico (lo trova qui sopra, nella sua scheda Amici).</p>';
+  $('onlineList').innerHTML=fr.length?fr.map(f=>{const o=ONLINE[f.id];return'<div class="brow fr"><span class="odot'+(o?' on':'')+'"></span><span class="bn">'+esc(f.name)+(o&&o.st==='game'?' <i>in partita</i>':'')+'</span>'+(o&&o.st!=='game'?'<span class="frb"><button class="buy" data-ch="arena" data-id="'+f.id+'">Arena</button><button class="buy alt" data-ch="side" data-id="'+f.id+'">Affiancata</button></span>':'<span class="bs">'+(o?'':'offline')+'</span>')+'</div>'}).join(''):'<p class="hint">Aggiungi un amico col suo codice amico (lo trova qui sopra, nella sua scheda Amici).</p>';
   renderClan()}
 $('onlineList').addEventListener('click',ev=>{const b=ev.target.closest('button[data-ch]');if(!b)return;sfx('click');createRoom(b.dataset.ch);setTimeout(()=>{sendInvite(b.dataset.id);toast('Invito mandato, aspetto la risposta')},400)});
-$('liveGD').onclick=()=>{sfx('click');withIntro('livegd',()=>createRoom('gduel'))};
-$('liveRC').onclick=()=>{sfx('click');withIntro('liverc',()=>createRoom('race'))};
+$('liveGD').onclick=()=>{sfx('click');withIntro('livear',()=>createRoom('arena'))};
+$('liveRC').onclick=()=>{sfx('click');withIntro('liveside',()=>createRoom('side'))};
 $('roomJoin').onclick=()=>{sfx('click');joinRoom($('roomIn').value);$('roomIn').value=''};
 $('friendAdd').onclick=()=>{sfx('click');friendAdd($('friendIn').value);$('friendIn').value=''};
 $('copyCode').onclick=()=>{try{navigator.clipboard.writeText(save.pid);toast('Codice amico copiato: '+save.pid)}catch(e){toast('Il tuo codice amico: '+save.pid)}};
@@ -175,8 +175,8 @@ function chatAdd(m){const el=$('clanChat');if(!el)return;const h=el.querySelecto
 async function clanSay(){const inp=$('clanMsg'),body=inp.value.trim();if(!body)return;inp.value='';try{await DB.say(body);const m={name:save.name,body};chatAdd(m);if(clanCh)clanCh.send({type:'broadcast',event:'m',payload:m})}catch(e){dbErr(e)}}
 
 Object.assign(MODE_INTRO,{
-  livegd:{title:'Duello dei gestori',items:[['m:polpo','In diretta contro un amico. Ognuno difende il suo gestore: ha 30 di vita.'],['e:kraken','Con la fame mandi mostri nella cucina dell\'altro. Ogni mostro che fai fuori ti dà perle.'],['t:granchio','Puoi assumere quando vuoi, anche mentre arrivano i mostri. In alto vedi la cucina dell\'avversario.'],['e:megalodonte','Vince chi mangia per primo il gestore dell\'altro. Dopo 3 minuti la fame raddoppia.']]},
-  liverc:{title:'Scalata',items:[['e:ghiozzo','In diretta: stessi abissi e stesse ondate, ognuno con il suo mazzo.'],['t:squalo','Vi vedete affiancati: la partita dell\'amico è nella finestrella in alto.'],['e:reAragosta','Ogni boss che batti manda tre mostri in regalo all\'altro.'],['m:polpo','Chi cade per primo perde.']]}});
+  livear:{title:'Arena',items:[['m:polpo','Come Clash Royale: il tuo gestore è in basso, quello dell\'amico in alto. Ha 40 di vita.'],['t:granchio','Metti i dipendenti nella tua metà del campo: fermano i mostri che scendono verso di te.'],['e:aringa','Tocca un mostro in basso, poi la corsia sinistra o destra: parte dalla tua cucina e sale verso la sua. La fame si ricarica da sola, massimo 10.'],['e:ghiozzo','Arrivano anche mostri neutri a tutti e due: ogni mostro fatto fuori ti dà perle.'],['e:megalodonte','Vince chi mangia per primo il gestore dell\'altro. Dopo 3 minuti la fame si ricarica il doppio.']]},
+  liveside:{title:'Affiancata',items:[['m:polpo','Il tuo gestore a sinistra, quello dell\'amico a destra, ognuno col suo sentiero.'],['e:ghiozzo','Dai due sentieri escono gli stessi mostri, a piani, sempre più forti.'],['e:reAragosta','Ogni boss che batti manda 3 mostri in regalo all\'altro.'],['t:squalo','Chi sopravvive di più vince.']]}});
 
 /* avvio: profilo sul server e lobby */
 if(NET.on){lobbyJoin();syncProfile();setInterval(()=>{if(netOK)syncProfile()},120000)}

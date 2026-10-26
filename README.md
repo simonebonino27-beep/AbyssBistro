@@ -4,7 +4,7 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 
 **Gioca:** https://simonebonino27-beep.github.io/AbyssBistro/
 
-## Cosa c'è (v7)
+## Cosa c'è (v8)
 
 ### Menu
 Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
@@ -19,15 +19,16 @@ Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
 - **Run corta**: 3 piani (2 a caso + l'Abisso), 3 ondate e un boss per piano.
 - **Run lunga**: tutti e 6 i piani fino al Megalodonte, 5 ondate e un boss per piano.
 - **Infinita**: ondate senza fine, un boss ogni 5, i piani cambiano ciclicamente.
-- **Mostro affamato**: ruoli invertiti. Guidi i mostri contro una cucina difesa dall'IA, spendendo fame. 3 round, 2:30 ciascuno.
+- **Mostro affamato**: ruoli invertiti. Guidi i mostri contro una cucina difesa dall'IA. La fame è come l'elisir: barra da 10, si ricarica 1 ogni 2 secondi, i mostri costano da 1 a 9, un boss alla volta. 3 round, 2:30 ciascuno.
 
 ### Contenuti
-- **17 dipendenti** con attacchi diversi: proiettili, morsi, colpi perforanti, catene elettriche, stordimenti, esplosioni, inchiostro che confonde, blocco, luce, buff, cure, perle, pattuglia, trasloco, sciame, balena che inghiotte e stagista casuale.
-- **6 gestori**: Polpo Chef (trappole), Pesce Pagliaccio (+perle, +nemici), Capitan Narvalo (maledizioni potenziate), Fratelli Gamberi (due mani di carte), Nonno Capitano (siluri), Squalo Squalo (critici).
-- **14 nemici** con abilità: corazza, volo, furti, divisione, invisibilità, aura che rallenta, corazza frontale, nausea, spegni-luce, carica, travestimento.
+- **24 dipendenti** con attacchi tutti diversi: proiettili, morsi, colpi perforanti, catene elettriche, stordimenti, esplosioni, inchiostro, blocco, luce, buff, cure, perle, pattuglia, trasloco, sciame, balena che inghiotte, stagista casuale, morsi che indeboliscono (Piranha), pizze ad area (Aragostina), aura gelata (Gelataio), colpo di grazia (Macellaio), mine (Artificiere), respingere (Delfino), sei nigiri insieme (Polpo giocoliere).
+- **4 incantesimi** da lanciare sul campo: Bomba al wasabi, Rete da pesca, Onda di sorbetto, Pausa caffè.
+- **10 gestori**: Polpo Chef (trappole), Pesce Pagliaccio (+perle, +nemici), Capitan Narvalo (maledizioni potenziate), Fratelli Gamberi (due mani di carte), Nonno Capitano (siluri), Squalo Squalo (critici), Contessa Medusa (+15% velocità, -5 vita), Granchio Banchiere (interessi), Mamma Seppia (rispedisce il primo mostro), Chef Tsunami (onda che respinge tutti).
+- **16 nemici** con abilità: corazza, volo, furti, divisione, invisibilità, aura che rallenta, corazza frontale, nausea, spegni-luce, carica, travestimento, cure (Pesce pulitore), esplosione che addormenta (Pesce palla kamikaze).
 - **6 boss**: Re Aragosta, Granchio reale, Kraken, Pesce lanterna gigante, Leviatano, Megalodonte. Battuti diventano mostri leggendari per la modalità Mostro affamato.
 - **6 piani** con regole proprie: Barriera corallina, Foresta di kelp (le alghe nascondono i nemici), Relitto (due corsie che si incrociano), Fossa buia (buio: serve la Rana faro), Camini vulcanici (eruzioni), Abisso (buio quasi totale).
-- **Mazzo**: scegli 4-8 dipendenti, in partita ne hai 3 in mano: quella che usi torna in fondo al mazzo e ne entra un'altra a caso. Puoi cambiare la mano pagando perle (o fame, da mostro). Le carte dopo ogni ondata possono farti trovare dipendenti nuovi.
+- **Mazzo** come Clash Royale: da 5 a 8 carte, 4 in mano e si vede la prossima; quella giocata va in fondo al mazzo. Puoi cambiare la mano pagando perle (o fame, da mostro).
 - **Carte** con rarità (comune → leggendario), battuta ed effetto in numeri: potenziamenti, maledizioni, piatti speciali.
 
 ### Progressione (Il Bistrot)
@@ -41,8 +42,8 @@ Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
 - Rimescolo a pagamento delle carte dopo le ondate e della mano di dipendenti.
 
 ### Online (Supabase)
-- **Duello dei gestori** in diretta: ognuno difende il suo gestore (40 vita), con la fame manda mostri nella cucina dell'altro, in alto si vede la partita dell'avversario. 3 minuti, poi supplementari con fame doppia.
-- **Scalata** in diretta: stesse ondate per tutti e due, ogni boss battuto regala 3 mostri all'altro, chi cade per primo perde.
+- **Arena** in diretta (stile Clash Royale): un campo solo con due corsie, il tuo gestore in basso e quello dell'avversario in alto (sul suo telefono è il contrario). Metti i dipendenti nella tua metà e mandi mostri sulla corsia che vuoi; arrivano anche mostri neutri per tutta la partita. 3 minuti, poi supplementari.
+- **Affiancata** in diretta: i due gestori uno accanto all'altro con due sentieri, stesse ondate a piani per tutti e due, ogni boss battuto regala 3 mostri all'altro, chi sopravvive di più vince.
 - Stanze con codice di 4 lettere, inviti agli amici online, faccine, rivincita, trofei.
 - Amici col codice amico, classifica della sfida del giorno (amici e mondo), brigate (clan) fino a 30 chef con chat.
 - Database: `supabase.sql` da incollare una volta nello SQL Editor di Supabase. Il PvP in diretta usa Realtime e non ha tabelle.
@@ -84,7 +85,8 @@ index.html        pagina del gioco
 css/style.css     grafica dell'interfaccia
 js/core.js        costanti, salvataggio, audio
 js/data.js        dipendenti, nemici, boss, gestori, piani, carte, prezzi
-js/art.js         disegni di tutti i personaggi
+js/art.js         disegni dei personaggi
+js/art2.js        disegni dei personaggi aggiunti dopo
 js/world.js       piani, percorsi, fondali, luce e buio
 js/game.js        simulazione della partita e disegno
 js/ui.js          menu, Bistrot, schermate, ciclo principale
@@ -93,7 +95,7 @@ js/tutorial.js    tutorial guidato e intro delle modalità
 js/social.js      PvP a codice, classifica amici, posta
 js/menu.js        menu a 5 schede, offerte del giorno
 js/online.js      Supabase: amici, stanze, inviti, classifica, brigate
-js/live.js        PvP in diretta: Duello dei gestori e Scalata
+js/live.js        PvP in diretta: Arena e Affiancata
 js/vendor/        supabase-js (licenza MIT)
 supabase.sql      tabelle e funzioni del database
 manifest.json     dati dell'app installabile
