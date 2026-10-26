@@ -2,7 +2,7 @@
 /* ===== Abyss Bistro: interfaccia, menu, Bistrot, ciclo principale ===== */
 const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
-function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
+function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),Math.max(2000,m.length*60))}
 const show=(id,on=true)=>{$(id).hidden=!on};
 const OVERLAYS=['menu','setup','msetup','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','packOv','cinfo','roomOv','inviteOv','inbox','shareOv','armyOv'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));

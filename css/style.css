@@ -28,7 +28,7 @@ canvas#game{position:absolute;left:0;top:0;display:block;touch-action:none}
 .hbtn{flex:none;background:var(--tide);border:2px solid var(--ink);border-radius:10px;height:36px;min-width:38px;font-family:var(--display);font-size:19px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:3px}
 .bars{width:4px;height:14px;background:var(--foam);border-radius:1px}
 
-#toast{position:absolute;left:50%;top:62px;z-index:3;transform:translateX(-50%);background:var(--ink);color:var(--pearl);padding:7px 14px;border-radius:10px;font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+#toast{position:absolute;left:50%;top:62px;z-index:30;transform:translateX(-50%);background:var(--ink);color:var(--pearl);padding:7px 14px;border-radius:10px;font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
 #toast.on{opacity:1}
 #panel{position:absolute;background:var(--abyss);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:7px;width:230px;box-sizing:border-box;z-index:3}
 #panel h4{margin:0;font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:1px;color:var(--pearl)}
@@ -468,3 +468,6 @@ input[type=range]{width:100%;accent-color:var(--coral)}
 .coltab.on,.btab.on,.ctab.on{background:var(--coral);color:var(--coral-ink)}
 .brow.fr{grid-template-columns:auto minmax(0,1fr) auto}
 #panel.p-mini .row button{white-space:nowrap}#panel.p-glass>p:last-child{display:none}
+
+#toast{white-space:normal;text-align:center;max-width:88vw;width:max-content}
+.diag{font-size:11px;margin:-6px 0 0;text-align:left;font-family:ui-monospace,Menlo,monospace}

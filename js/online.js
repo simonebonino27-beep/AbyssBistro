@@ -56,15 +56,15 @@ const DB={
 const dbErr=e=>{const m=String(e&&e.message||e);toast(/brigata non trovata/.test(m)?'Brigata non trovata: controlla il codice':/piena/.test(m)?'Brigata piena (30 chef)':/fetch|network|Failed/i.test(m)?'Niente connessione al server':'Errore online: '+m.slice(0,60))};
 
 /* ---------- lobby: chi è online e inviti ---------- */
-let LOBBY=null,ONLINE={},netOK=false;
+let LOBBY=null,ONLINE={},netOK=false,rtOK=false,dbOK=false,rtErr='',dbE='';
 function lobbyMeta(st){return{id:save.pid,name:save.name,lvl:save.lvl||1,tr:save.trophies,st:st||(S&&S.live?'game':'menu')}}
 function lobbyJoin(){if(!NET.on||LOBBY)return;const ch=NET.ch('ab-lobby');LOBBY=ch;
   ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();ONLINE={};for(const[k,v]of Object.entries(st))if(k!==save.pid&&v[0])ONLINE[k]=v[0];onlineChanged()});
   ch.on('broadcast',{event:'inv'},({payload:p})=>{if(p.to===save.pid)gotInvite(p)});
   ch.on('broadcast',{event:'dec'},({payload:p})=>{if(p.to===save.pid&&ROOM&&ROOM.code===p.room)toast(p.name+' non può giocare ora')});
-  ch.subscribe(s=>{if(s==='SUBSCRIBED'){netOK=true;ch.track(lobbyMeta());onlineChanged()}else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED'){netOK=false;onlineChanged()}})}
+  ch.subscribe((s,err)=>{if(s==='SUBSCRIBED'){rtOK=true;rtErr='';netOK=true;ch.track(lobbyMeta());onlineChanged()}else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED'){rtOK=false;if(!(s==='CLOSED'&&rtErr))rtErr=s+(err&&err.message?': '+err.message:'');netOK=dbOK;onlineChanged();if(s!=='CLOSED')setTimeout(()=>{if(!rtOK){NET.drop(LOBBY);LOBBY=null;lobbyJoin()}},8000)}})}
 function lobbyStatus(st){if(LOBBY&&netOK)LOBBY.track(lobbyMeta(st))}
-async function syncProfile(){if(!NET.on)return;try{const cid=await DB.sync();netOK=true;save.clanId=cid||null;writeSave();onlineChanged()}catch(e){}}
+async function syncProfile(){if(!NET.on)return;try{const cid=await DB.sync();dbOK=true;dbE='';netOK=true;save.clanId=cid||null;writeSave();onlineChanged()}catch(e){dbOK=false;dbE=String(e&&e.message||e).slice(0,120);netOK=rtOK;onlineChanged()}}
 function onlineChanged(){if(typeof renderOnline==='function'&&!$('menu').hidden)renderOnline()}
 
 /* amici: si aggiungono col codice amico o col nome, e in automatico dopo una partita in diretta */
@@ -113,8 +113,8 @@ function roomUI(){if(!ROOM)return;$('roomTitle').textContent=ROOM.mode?LIVE_NAME
 $('roomInv').addEventListener('click',ev=>{const b=ev.target.closest('button[data-inv]');if(!b||!ROOM)return;sendInvite(b.dataset.inv);b.disabled=true;b.textContent='Invito mandato'});
 $('roomCancel').onclick=()=>{sfx('click');clearInterval(cdTimer);leaveRoom();hideRoom()};
 function sendInvite(to){if(!LOBBY||!ROOM)return;LOBBY.send({type:'broadcast',event:'inv',payload:{to,from:save.pid,name:save.name,mode:ROOM.mode,room:ROOM.code}})}
-function createRoom(mode){if(!NET.on||!netOK){toast('Serve internet per giocare in diretta. Intanto usa le sfide a codice');return}openRoom(roomCode(),true,mode)}
-function joinRoom(code){code=(code||'').trim().toUpperCase();if(!/^[A-Z]{4}$/.test(code)){toast('Il codice stanza è di 4 lettere');return}if(!NET.on||!netOK){toast('Serve internet per giocare in diretta');return}openRoom(code,false,null)}
+function createRoom(mode){if(!NET.on||!rtOK){toast(rtErr?'La diretta non si collega ('+rtErr+')':'Mi sto ancora collegando alla diretta, riprova tra un attimo');return}openRoom(roomCode(),true,mode)}
+function joinRoom(code){code=(code||'').trim().toUpperCase();if(!/^[A-Z]{4}$/.test(code)){toast('Il codice stanza è di 4 lettere');return}if(!NET.on||!rtOK){toast(rtErr?'La diretta non si collega ('+rtErr+')':'Mi sto ancora collegando alla diretta, riprova tra un attimo');return}openRoom(code,false,null)}
 let pendingInv=null;
 function gotInvite(p){if(S&&S.live&&S.mode!=='end'){LOBBY.send({type:'broadcast',event:'dec',payload:{to:p.from,name:save.name,room:p.room}});return}
   pendingInv=p;sfx('unlock');$('invText').innerHTML='<b>'+esc(p.name)+'</b> ti sfida a<br><span class="invMode">'+LIVE_NAMES[p.mode]+'</span>';show('inviteOv');addFriendId(p.from,p.name)}
@@ -125,7 +125,7 @@ function onlineFriends(){return Object.values(save.friends).filter(f=>f.id&&ONLI
 
 /* ---------- scheda Amici: parte online ---------- */
 let boardTab='fr',clanView=null,clanCh=null;
-function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',on);$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
+function renderOnline(){const on=NET.on&&netOK;$('onlDot').classList.toggle('on',rtOK&&dbOK);$('onlDiag').textContent=!NET.on?'':(dbOK?'Server ✓':'Server ✗'+(dbE?' ('+dbE+')':' (in attesa)'))+' · '+(rtOK?'Diretta ✓':'Diretta ✗'+(rtErr?' ('+rtErr+')':' (in attesa)'))+' · v7';$('onlTxt').textContent=on?'Online · '+(Object.keys(ONLINE).length)+' chef collegati':NET.on?'Mi collego al server…':'Offline: niente internet';
   $('myCode').textContent=save.pid;$('myTr').textContent=save.trophies;
   const fr=Object.values(save.friends).filter(f=>f.id).sort((a,b)=>(ONLINE[b.id]?1:0)-(ONLINE[a.id]?1:0));
   $('onlineList').innerHTML=fr.length?fr.map(f=>{const o=ONLINE[f.id];return'<div class="brow fr"><span class="odot'+(o?' on':'')+'"></span><span class="bn">'+esc(f.name)+(o&&o.st==='game'?' <i>in partita</i>':'')+'</span>'+(o&&o.st!=='game'?'<span class="frb"><button class="buy" data-ch="gduel" data-id="'+f.id+'">Duello</button><button class="buy alt" data-ch="race" data-id="'+f.id+'">Scalata</button></span>':'<span class="bs">'+(o?'':'offline')+'</span>')+'</div>'}).join(''):'<p class="hint">Aggiungi un amico col suo codice amico (lo trova qui sopra, nella sua scheda Amici).</p>';
