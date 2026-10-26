@@ -20,7 +20,7 @@ function fbm(x,y,o){let s=0,a=.5,f=1,n=0;for(let i=0;i<o;i++){s+=a*vnoise(x*f,y*
 let VW=360,VH=640,SC=1,OX=0,OY=0,DPR=1,V={x0:0,y0:0,x1:W,y1:H,w:W,h:H},T=0;
 
 /* ===== salvataggio ===== */
-const KEY='abyssBistro.save.v2';
+const KEY='abyssBistro.save.v2'+((location.search.match(/[?&]slot=(\w+)/)||[])[1]||'');
 const DEF_SAVE=()=>({v:2,perle:0,stars:0,runs:0,wins:0,
   best:{short:0,long:0,inf:0,monster:0},vol:{music:60,sfx:80},
   emp:{granchio:1,squalo:1,rana:1,sardine:1,polipetto:1},

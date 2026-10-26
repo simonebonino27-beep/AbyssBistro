@@ -1,6 +1,6 @@
 // Abyss Bistro service worker: rete prima, cache come riserva (così gli aggiornamenti arrivano subito e il gioco va anche offline).
-const CACHE = 'abyss-bistro-v12';
-const CORE = ['./', './index.html', './manifest.json', './css/style.css', './js/core.js', './js/data.js', './js/art.js', './js/world.js', './js/game.js', './js/ui.js', './js/cards.js', './js/tutorial.js', './js/social.js', './js/menu.js', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'abyss-bistro-v13';
+const CORE = ['./', './index.html', './manifest.json', './css/style.css', './js/core.js', './js/data.js', './js/art.js', './js/world.js', './js/game.js', './js/ui.js', './js/cards.js', './js/tutorial.js', './js/social.js', './js/menu.js', './js/vendor/supabase.js', './js/online.js', './js/live.js', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -16,6 +16,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== self.location.origin) return; // server online e font: niente cache
   e.respondWith(
     fetch(e.request)
       .then(res => {

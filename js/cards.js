@@ -56,7 +56,7 @@ function charCard(kind,key){const own=kind==='emp'?save.emp:kind==='mon'?save.mo
   let foot='';if(!l)foot='<span class="cl">Da trovare</span>';else if(kind==='mgr')foot='<span class="cl">Sbloccato</span>';else if(l>=LVL_MAX)foot='<span class="cl">Livello MAX</span>';
   else{const have=copiesOf(kind,key),need=COPIES_FOR[l],ready=have>=need,c=lvlCost(kind,key);foot='<span class="cl">Lv '+l+' · copie '+have+'/'+need+'</span><span class="cbar'+(ready?' full':'')+'"><i style="width:'+Math.min(100,have/need*100)+'%"></i></span>'+
     (ready?'<button class="buy" data-lv="'+kind+':'+key+'"'+(save.perle<c?' disabled':'')+'>Potenzia · '+c+'</button>':'')}
-  return'<div class="mc'+(l?'':' unk')+'" style="--rc:var('+RAR[d.rar].c+')"><span class="rr">'+RAR[d.rar].n+'</span><img alt="" src="'+img+'"><span class="nm">'+name+'</span>'+foot+'</div>'}
+  return'<div class="mc'+(l?'':' unk')+'" data-k="'+key+'" role="button" tabindex="0" style="--rc:var('+RAR[d.rar].c+')"><span class="rr">'+RAR[d.rar].n+'</span><img alt="" src="'+img+'"><span class="nm">'+name+'</span>'+foot+'</div>'}
 function renderColl(){updWallet();$('collLvl').textContent='Livello '+save.lvl;$('collXp').style.width=(save.xp/xpNeed(save.lvl)*100)+'%';$('collXpLbl').textContent=save.xp+'/'+xpNeed(save.lvl)+' esperienza';
   $('packList').innerHTML=PACK_KEYS.map(k=>{const P=PACKS[k],n=save.packs[k]||0;return'<div class="pk" style="--rc:'+P.col+'"><img alt="" src="'+ICONS.pack[k]+'"><div class="grow"><span class="nm">'+P.name+'</span><span class="md">'+P.info+'</span></div><div class="pkb">'+
     (n?'<button class="buy" data-open="'+k+'">Apri ('+n+')</button>':'')+'<button class="buy alt" data-buy="'+k+'"'+(save.perle<P.price?' disabled':'')+'><span class="pearl"></span>'+P.price+'</button></div></div>'}).join('');
@@ -68,7 +68,28 @@ function renderColl(){updWallet();$('collLvl').textContent='Livello '+save.lvl;$
 $('packList').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||b.disabled)return;
   if(b.dataset.buy){const k=b.dataset.buy;if(save.perle<PACKS[k].price){sfx('nope');return}save.perle-=PACKS[k].price;save.packs[k]++;writeSave();sfx('coin');menuRender();toast(PACKS[k].name+' comprato: lo apri in Carte');return}
   if(b.dataset.open)openPack(b.dataset.open)});
-$('collGrid').addEventListener('click',ev=>{const b=ev.target.closest('button[data-lv]');if(!b||b.disabled)return;const[kind,key]=b.dataset.lv.split(':');if(doLevel(kind,key)){sfx('unlock');renderColl()}else sfx('nope')});
+/* scheda del personaggio: statistiche da 1 a 100 */
+const st100=(v,max)=>Math.max(1,Math.min(100,Math.round(v/max*100)));
+const DPS=k=>{const d=TOWERS[k];return d.dmg?d.dmg/d.rate:0};
+const MAXDPS=Math.max(...TOWER_KEYS.map(DPS)),MAXRANGE=Math.max(...TOWER_KEYS.map(k=>TOWERS[k].range)),MAXCOST=Math.max(...TOWER_KEYS.map(k=>TOWERS[k].cost));
+const NB=MONSTER_KEYS.filter(k=>!ENEMIES[k].boss),BS=MONSTER_KEYS.filter(k=>ENEMIES[k].boss);
+const mmax=(ks,f)=>Math.max(...ks.map(k=>f(ENEMIES[k])));
+function statsFor(kind,key){const lv=(kind==='emp'?save.emp:save.mon)[key]||1;
+  if(kind==='emp'){const d=TOWERS[key],m=1+.1*(lv-1),sup=!d.dmg;
+    return[[sup?'Danno (supporto)':'Danno',sup?1:st100(DPS(key)*m,MAXDPS),sup?'non attacca':fmt(d.dmg*m)+' a colpo'],['Gittata',st100(d.range,MAXRANGE),String(d.range)],['Velocità d\'attacco',st100(1/d.rate,1/.25),'1 ogni '+d.rate+'s'],['Prezzo in partita',st100(d.cost,MAXCOST),d.cost+' perle']]}
+  const d=ENEMIES[key],ks=d.boss?BS:NB,m=1+.12*(lv-1);
+  return[['Vita',st100(d.hp*m,mmax(ks,e=>e.hp)),Math.round(d.hp*m)+(d.boss?' (in difesa)':'')],['Velocità',st100(d.speed,mmax(MONSTER_KEYS,e=>e.speed)),String(d.speed)],['Morso al bancone',st100(d.dmg,mmax(ks,e=>e.dmg)),String(d.dmg)],['Fame',st100(d.mcost,100),d.mcost+' su 100'+(d.group?' · gruppo da '+d.group:'')]]}
+function openCInfo(kind,key){const own=kind==='emp'?save.emp:kind==='mon'?save.mon:save.mgr,d=kind==='emp'?TOWERS[key]:kind==='mon'?ENEMIES[key]:MANAGERS[key],l=own[key];
+  const img=kind==='emp'?ICONS.t[key]:kind==='mon'?ICONS.e[key]:ICONS.m[key],name=kind==='emp'?d.full:d.name+(d.title?' · '+d.title:'');
+  let h='<div class="ciHead" style="--rc:var('+RAR[d.rar].c+')"><img alt="" src="'+img+'"><div><span class="chip" style="background:var('+RAR[d.rar].c+')">'+RAR[d.rar].n+'</span><b>'+name+'</b><span class="ciLv">'+(l?(kind==='mgr'?'Sbloccato':'Livello '+l+' di '+LVL_MAX):'Da trovare')+'</span></div></div><p class="ciInfo">'+d.info+'</p>';
+  if(kind!=='mgr')h+='<div class="ciStats">'+statsFor(kind,key).map(([n,v,r])=>'<div class="ciS"><span class="ciN">'+n+'</span><span class="ciBar"><i style="width:'+v+'%"></i></span><b>'+v+'</b><span class="ciR">'+r+'</span></div>').join('')+'</div>';
+  if(kind!=='mgr'&&l&&l<LVL_MAX)h+='<p class="hint">Al livello '+(l+1)+': '+(kind==='emp'?'+10% danni':'+12% vita')+' · copie '+copiesOf(kind,key)+'/'+COPIES_FOR[l]+'</p>';
+  if(d.joke)h+='<p class="ciJoke">'+d.joke+'</p>';
+  $('cinfoBody').innerHTML=h;show('cinfo');sfx('click')}
+$('cinfo').addEventListener('click',ev=>{if(ev.target.id==='cinfo'||ev.target.closest('#cinfoClose')){sfx('click');show('cinfo',false)}});
+let lpT=0;$('collGrid').addEventListener('pointerdown',ev=>{const c=ev.target.closest('.mc');if(!c||ev.target.closest('button'))return;clearTimeout(lpT);lpT=setTimeout(()=>{lpT='done';openCInfo(collTab,c.dataset.k)},450)});
+['pointerup','pointerleave','pointercancel'].forEach(t=>$('collGrid').addEventListener(t,()=>{if(lpT!=='done')clearTimeout(lpT)}));
+$('collGrid').addEventListener('click',ev=>{const c=ev.target.closest('.mc');if(c&&!ev.target.closest('button')){if(lpT==='done'){lpT=0;return}openCInfo(collTab,c.dataset.k);return}const b=ev.target.closest('button[data-lv]');if(!b||b.disabled)return;const[kind,key]=b.dataset.lv.split(':');if(doLevel(kind,key)){sfx('unlock');renderColl()}else sfx('nope')});
 document.querySelectorAll('.coltab').forEach(b=>b.onclick=()=>{sfx('click');collTab=b.dataset.tab;renderColl()});
 
 /* ---------- apertura pacchetto ---------- */

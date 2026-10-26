@@ -4,7 +4,7 @@ const cv=$('game'),ctx=cv.getContext('2d');
 const toastEl=$('toast');let toastTimer;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),2000)}
 const show=(id,on=true)=>{$(id).hidden=!on};
-const OVERLAYS=['menu','setup','msetup','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','packOv','inbox','shareOv','armyOv'];
+const OVERLAYS=['menu','setup','msetup','pause','cards','floorOv','end','codex','howto','askOv','modeIntro','packOv','cinfo','roomOv','inviteOv','inbox','shareOv','armyOv'];
 const hideAll=()=>OVERLAYS.forEach(id=>show(id,false));
 const rarChip=r=>'<span class="chip" style="background:var('+RAR[r].c+')">'+RAR[r].n+'</span>';
 const mgrShort={polpo:'Trappole',pagliaccio:'+50% perle',narvalo:'Maledizioni+',gamberi:'Doppia mano',nonno:'Siluri',squalo:'Critici'};
@@ -34,15 +34,18 @@ function hire(slot,key){const cost=hireCost(key);if(S.perle<cost){sfx('nope');to
   S.perle-=cost;const t=makeTower(key,slot);t.spent=cost;const i=S.hand.indexOf(key);if(i>=0&&!S.kitBuild)useCard(i);
   sfx('place');fx({k:'ring',x:slot.x,y:slot.y,r:24,dur:.35,col:'#f1dca2'});closePanel();return true}
 const panel=$('panel');
-function placePanel(x,y,h){const px=OX+x*SC,py=OY+y*SC,bottom=VH-$('bar').offsetHeight+10;let left=px-115,top=py+22;if(top+h>bottom)top=py-h-26;
-  panel.style.left=Math.max(8,Math.min(VW-238,left))+'px';panel.style.top=Math.max($('hud').offsetHeight,top)+'px';panel.hidden=false}
+const pStyle=()=>save.panelStyle||'mini';
+function placePanel(x,y,h){panel.className='p-'+pStyle();panel.hidden=false;h=panel.offsetHeight||h;const w=panel.offsetWidth||230,px=OX+x*SC,py=OY+y*SC,bottom=VH-$('bar').offsetHeight+10;let left=px-w/2,top=pStyle()==='mini'?py-h-30*SC:py+22;if(pStyle()==='mini'&&top<$('hud').offsetHeight)top=py+18*SC;if(top+h>bottom)top=py-h-26;
+  panel.style.left=Math.max(8,Math.min(VW-w-8,left))+'px';panel.style.top=Math.max($('hud').offsetHeight,top)+'px';panel.hidden=false}
 function openTower(t){S.sel=t;S.selSlot=t.slot;sfx('click');const d=t.d,max=t.lv>=3,cost=upCost(t),refund=Math.round(t.spent*.6);
   const stat=d.dmg>0?'danno '+fmt(tDmg(t))+' · gittata '+Math.round(tRange(t)):d.info;
-  panel.innerHTML='<h4>'+d.full+'</h4><p>Livello '+t.lv+'/3 · '+RAR[d.rar].n+'<br>'+stat+'</p><div class="row"><button class="up" id="upBtn"'+(max||S.perle<cost?' disabled':'')+'>'+(max?'Livello max':'Potenzia '+cost)+'</button><button id="sellBtn">Licenzia +'+refund+'</button></div>';
+  if(pStyle()==='mini')panel.innerHTML='<div class="mh"><b>'+d.name+'</b><span>'+'★'.repeat(t.lv)+'</span></div><div class="ms">'+(d.dmg>0?'<span title="Danno">⚔ '+fmt(tDmg(t))+'</span>':'<span>✚ '+({light:'luce',buff:'+30% velocità',heal:'cura',bank:'+perle'}[d.kind]||d.kind)+'</span>')+'<span title="Gittata">◎ '+Math.round(tRange(t))+'</span></div><div class="row"><button class="up" id="upBtn" aria-label="Potenzia"'+(max||S.perle<cost?' disabled':'')+'>'+(max?'MAX':'⬆ '+cost)+'</button><button id="sellBtn" aria-label="Licenzia">💰 +'+refund+'</button></div>';
+  else panel.innerHTML='<h4>'+d.full+'</h4><p>Livello '+t.lv+'/3 · '+RAR[d.rar].n+'<br>'+stat+'</p><div class="row"><button class="up" id="upBtn"'+(max||S.perle<cost?' disabled':'')+'>'+(max?'Livello max':'Potenzia '+cost)+'</button><button id="sellBtn">Licenzia +'+refund+'</button></div>';
   placePanel(t.x,t.y,110);
   $('upBtn').onclick=()=>{if(t.lv>=3||S.perle<cost)return;S.perle-=cost;t.spent+=cost;t.lv++;sfx('card');fx({k:'ring',x:t.x,y:t.y,r:26,dur:.4,col:'#e8c14a'});openTower(t)};
   $('sellBtn').onclick=()=>{S.perle+=refund;t.slot.tower=null;S.towers=S.towers.filter(x=>x!==t);sfx('nope');closePanel()}}
 function openHire(slot){if(S.tutorial&&S.tutOnly==='-'){toast('Segui il Polpo Chef');return}S.sel=null;S.selSlot=slot;sfx('click');const keys=(S.kitBuild?TOWER_KEYS.filter(k=>save.emp[k]):[...new Set(S.hand.filter(Boolean))]).filter(k=>!(S.tutorial&&S.tutOnly)||k===S.tutOnly);
+  if(pStyle()==='mini')panel.innerHTML='<div class="mhire">'+keys.map(k=>{const c=hireCost(k);return'<button class="hire" data-k="'+k+'" aria-label="Assumi '+TOWERS[k].name+'"'+(S.perle<c?' disabled':'')+'><img alt="" src="'+ICONS.t[k]+'"><span class="cs"><span class="pearl"></span>'+c+'</span></button>'}).join('')+'</div>';else
   panel.innerHTML='<h4>Assumi qui</h4>'+keys.map(k=>{const d=TOWERS[k],c=hireCost(k);return'<button class="hire" data-k="'+k+'"'+(S.perle<c?' disabled':'')+'><img alt="" src="'+ICONS.t[k]+'"><span class="grow">'+d.full+'<small>'+d.info+'</small></span><span class="cs"><span class="pearl"></span>'+c+'</span></button>'}).join('')+'<p>In mano hai 3 dipendenti pescati a caso dal mazzo: quello che usi torna in fondo e ne entra un altro.</p>';
   placePanel(slot.x,slot.y,60+keys.length*50);panel.querySelectorAll('.hire').forEach(b=>b.onclick=()=>hire(slot,b.dataset.k))}
 function closePanel(){if(S){S.sel=null;S.selSlot=null}panel.hidden=true}
@@ -249,6 +252,8 @@ let pauseFromMenu=false;
 function openPause(fromMenu){pauseFromMenu=fromMenu;if(!fromMenu){if(!S||!['build','wave','mplay'].includes(S.mode))return;S.prev=S.mode;S.mode='pause';closePanel()}
   $('pauseTitle').textContent=fromMenu?'Impostazioni':'Pausa';$('pauseRun').hidden=fromMenu;$('resumeBtn').textContent=fromMenu?'Chiudi':'Riprendi';$('saveMsg').textContent='';
   if(fromMenu)hideAll();show('pause');pausedAudio=!fromMenu;applyVol()}
+function syncSeg(){document.querySelectorAll('#panelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===pStyle()))}
+document.querySelectorAll('#panelSeg button').forEach(b=>b.onclick=()=>{save.panelStyle=b.dataset.v;writeSave();syncSeg();sfx('click');toast('Pannello: '+b.textContent)});syncSeg();
 $('pauseBtn').onclick=()=>{sfx('click');openPause(false)};
 $('settingsBtn').onclick=$('settings2Btn').onclick=()=>{sfx('click');openPause(true)};
 $('resumeBtn').onclick=()=>{sfx('click');show('pause',false);pausedAudio=false;applyVol();if(pauseFromMenu)showMenu();else S.mode=S.prev||'build'};

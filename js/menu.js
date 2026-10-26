@@ -48,5 +48,5 @@ function menuRender(tab){updWallet();renderHub();renderResto();renderColl();rend
 
 $('tut2Btn').onclick=()=>$('tutBtn').click();
 const navIcons=[ICONS.pack.epico,ICONS.t.granchio,ICONS.m.polpo,ICONS.e.megalodonte,ICONS.resto.hp];navIcons.forEach((s,i)=>$('navI'+i).src=s);
-$('tileTut').src=ICONS.m.polpo;$('clanImg').src=ICONS.m[MANAGER_KEYS[MANAGER_KEYS.length-1]];
+$('tileTut').src=ICONS.m.polpo;
 if(!$('menu').hidden)menuRender('play');

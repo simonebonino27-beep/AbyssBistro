@@ -4,7 +4,7 @@ Tower defense roguelike in 2D. Il Polpo Chef difende il suo sushi bar in fondo a
 
 **Gioca:** https://simonebonino27-beep.github.io/AbyssBistro/
 
-## Cosa c'è (v6, gioco completo da bilanciare)
+## Cosa c'è (v7)
 
 ### Menu
 Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
@@ -40,7 +40,15 @@ Cinque schede da scorrere col dito o dalla barra in basso, si parte da Gioca:
 - I doppioni diventano copie: raggiunte quelle richieste puoi pagare il potenziamento in perle.
 - Rimescolo a pagamento delle carte dopo le ondate e della mano di dipendenti.
 
-### PvP (a codice, niente server)
+### Online (Supabase)
+- **Duello dei gestori** in diretta: ognuno difende il suo gestore (40 vita), con la fame manda mostri nella cucina dell'altro, in alto si vede la partita dell'avversario. 3 minuti, poi supplementari con fame doppia.
+- **Scalata** in diretta: stesse ondate per tutti e due, ogni boss battuto regala 3 mostri all'altro, chi cade per primo perde.
+- Stanze con codice di 4 lettere, inviti agli amici online, faccine, rivincita, trofei.
+- Amici col codice amico, classifica della sfida del giorno (amici e mondo), brigate (clan) fino a 30 chef con chat.
+- Database: `supabase.sql` da incollare una volta nello SQL Editor di Supabase. Il PvP in diretta usa Realtime e non ha tabelle.
+- Prova in locale senza server: apri due schede con `?localnet=1&slot=a` e `?localnet=1&slot=b`.
+
+### PvP a codice (anche senza internet)
 Ogni sfida è un codice `ABX-...` da mandare in chat; l'amico lo incolla in **PvP** e gioca.
 - **Chef contro Chef**: stesso piano, stesse ondate e stesse carte decisi dal codice. Vince chi fa più punti.
 - **Mostro contro Mostro**: stessa cucina da divorare con gli stessi mostri. Vince chi fa più danni.
@@ -84,8 +92,12 @@ js/cards.js       collezione, copie, pacchetti, livello giocatore
 js/tutorial.js    tutorial guidato e intro delle modalità
 js/social.js      PvP a codice, classifica amici, posta
 js/menu.js        menu a 5 schede, offerte del giorno
+js/online.js      Supabase: amici, stanze, inviti, classifica, brigate
+js/live.js        PvP in diretta: Duello dei gestori e Scalata
+js/vendor/        supabase-js (licenza MIT)
+supabase.sql      tabelle e funzioni del database
 manifest.json     dati dell'app installabile
 sw.js             funzionamento offline
 icons/            icone dell'app
 ```
-Nessuna dipendenza e nessuna build: basta servire la cartella (GitHub Pages lo fa da solo).
+Nessuna build: basta servire la cartella (GitHub Pages lo fa da solo).

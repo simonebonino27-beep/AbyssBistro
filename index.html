@@ -30,10 +30,14 @@
     <button class="hbtn" id="pauseBtn" aria-label="Pausa"><span class="bars"></span><span class="bars"></span></button>
   </div>
   <div id="toolInfo" hidden></div>
+  <div id="oppView" hidden><div class="oppTop"><b id="oppName">Avversario</b><span id="oppInfo"></span></div><div class="oppHp"><i id="oppHpF"></i></div><canvas id="oppCv" aria-label="Partita dell'avversario in diretta"></canvas><span class="oppEmo" id="oppEmo"></span></div>
+  <div id="emoBar" hidden><button data-e="😂">😂</button><button data-e="😡">😡</button><button data-e="👍">👍</button><button data-e="🦈">🦈</button></div>
+  <span class="myEmo" id="myEmo"></span>
   <div id="toast" role="status"></div>
   <div id="coach" hidden></div>
   <div id="panel" hidden></div>
   <div id="bar" class="gut"><div id="barIn">
+    <div id="sendRow" hidden><div class="sendHead"><span>Manda a <b id="sendTo">?</b></span><span id="fameLbl">0/100</span></div><div class="fameBar"><i id="fameFill"></i></div><div class="sendBtns" id="sendBtns"></div></div>
     <div id="hungerWrap" hidden><span class="fang" aria-hidden="true"></span><div id="hungerBar"><div id="hungerFill"></div></div><span id="hungerLbl">0/100</span></div>
     <div id="preview" hidden></div>
     <div id="shop"></div>
@@ -85,8 +89,26 @@
         </div></section>
         <section class="mPage" data-p="social" aria-label="Amici"><div class="pIn">
           <h2>Amici e PvP</h2>
-      <p class="hint">Niente attese online: ogni sfida è un codice. Lo mandi su WhatsApp o Telegram, l'amico lo incolla qui e gioca contro di te.</p>
-      <label class="nameRow" for="pvpName">Il tuo nome da chef <input id="pvpName" maxlength="16" autocomplete="off" spellcheck="false"></label>
+          <div class="onl"><span class="odot" id="onlDot"></span><span id="onlTxt">Offline</span><span class="trc">🏆 <b id="myTr">0</b></span></div>
+          <label class="nameRow" for="pvpName">Il tuo nome da chef <input id="pvpName" maxlength="16" autocomplete="off" spellcheck="false"></label>
+          <div class="fcode">Il tuo codice amico <button class="ghost slim" id="copyCode"><b id="myCode">--------</b></button></div>
+          <div class="sectT">In diretta</div>
+          <div class="pvpGrid">
+            <button class="pvpc live" id="liveGD"><img alt="" id="lvI1"><b>Duello dei gestori</b><span>Difendi il tuo gestore e manda mostri all'altro</span></button>
+            <button class="pvpc live" id="liveRC"><img alt="" id="lvI2"><b>Scalata</b><span>Stessi abissi, uno accanto all'altro: chi resiste di più</span></button>
+          </div>
+          <div class="pasteBox"><input id="roomIn" maxlength="4" placeholder="Codice stanza (4 lettere)" autocomplete="off" spellcheck="false" autocapitalize="characters"><button class="big sm" id="roomJoin">Entra</button></div>
+          <div class="sectT">Amici</div>
+          <div class="board" id="onlineList"></div>
+          <div class="pasteBox"><input id="friendIn" maxlength="16" placeholder="Codice amico o nome" autocomplete="off" spellcheck="false"><button class="big sm" id="friendAdd">Aggiungi</button></div>
+          <div class="sectT">Brigata</div>
+          <div class="clanWrap" id="clanBox"></div>
+          <div class="sectT">Classifica sfida del giorno</div>
+          <div class="tabs" role="tablist"><button class="btab on" data-b="fr">Amici</button><button class="btab" data-b="all">Mondo</button></div>
+      <p class="hint" id="boardDate"></p>
+      <div class="board" id="board"></div>
+          <div class="sectT">Sfide a codice (anche senza internet)</div>
+      <p class="hint">Ogni sfida è un codice: lo mandi su WhatsApp o Telegram, l'amico lo incolla qui e gioca contro di te.</p>
       <div class="pasteBox"><input id="pvpCode" placeholder="Incolla qui un codice ABX-..." autocomplete="off" spellcheck="false"><button class="big sm" id="pvpGo">Gioca</button></div>
       <span class="bkM" id="pvpMsg" role="status"></span>
       <div class="sectT">Crea una sfida</div>
@@ -98,13 +120,8 @@
       </div>
       <p class="hint">Piano per cucina e orda:</p>
       <div class="fchips" id="pvpFloors"></div>
-      <div class="sectT">Classifica amici</div>
-      <p class="hint" id="boardDate"></p>
-      <div class="board" id="board"></div>
-      <div class="sectT">Amici</div>
+      <div class="sectT sm">Duelli a codice</div>
       <div class="board" id="friendList"></div>
-          <div class="sectT">Brigate</div>
-          <div class="clanBox"><img alt="" id="clanImg"><div><b>Brigate (clan)</b><span>Le brigate servono il gioco online: chat, donazioni di copie e guerre tra cucine. Arrivano quando accendiamo il server.</span></div></div>
         </div></section>
         <section class="mPage" data-p="resto" aria-label="Ristorante"><div class="pIn">
           <h2>Il ristorante</h2>
@@ -161,6 +178,10 @@
         <label for="volSfx">Effetti <input type="range" id="volSfx" min="0" max="100" step="1"><output id="volSfxOut">80</output></label>
       </div>
       <div class="vol">
+        <span class="bkT">Pannello dei dipendenti</span>
+        <div class="seg" id="panelSeg" role="radiogroup"><button data-v="mini">Compatto</button><button data-v="glass">Trasparente</button><button data-v="classic">Classico</button></div>
+      </div>
+      <div class="vol">
         <span class="bkT">Salvataggio</span>
         <span class="bkD">Perle, stelle, sblocchi e livelli restano salvati su questo dispositivo. Per spostarli su un altro, copia il codice e incollalo lì.</span>
         <div class="rowbtns"><button class="ghost" id="copySave">Copia codice</button><button class="ghost" id="loadSave">Carica codice</button></div>
@@ -207,6 +228,33 @@
       <h2 id="miTitle"></h2>
       <ul class="ilist" id="miList"></ul>
       <button class="big" id="miGo">Ho capito, si parte</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="roomOv" hidden>
+    <div class="sheet">
+      <p class="eyebrow">In diretta</p>
+      <h2 id="roomTitle">Stanza</h2>
+      <p class="hint">Codice stanza</p>
+      <div class="roomCode" id="roomCode">----</div>
+      <p class="roomStatus" id="roomStatus" role="status"></p>
+      <div class="roomInv" id="roomInv"></div>
+      <button class="ghost" id="roomCancel">Esci dalla stanza</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="inviteOv" hidden>
+    <div class="sheet">
+      <p class="eyebrow">Sfida in arrivo</p>
+      <p class="invText" id="invText"></p>
+      <div class="rowbtns"><button class="ghost" id="invNo">Non ora</button><button class="big" id="invYes">Accetta</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="cinfo" hidden>
+    <div class="sheet cinfo">
+      <div id="cinfoBody"></div>
+      <button class="big" id="cinfoClose">Chiudi</button>
     </div>
   </div>
 
@@ -297,6 +345,9 @@
 <script src="js/tutorial.js"></script>
 <script src="js/social.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/online.js"></script>
+<script src="js/live.js"></script>
 <!--/APP-->
 </body>
 </html>

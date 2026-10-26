@@ -35,15 +35,15 @@ function genWave(){const boss=isBossWave(),depth=S.depth,w=S.run==='inf'?S.total
   if(S.tutorial){const add=(t,n,g)=>{for(let k=0;k<n;k++)q.push([t,g])};if(boss){add('ghiozzo',4,1.4);q.push([WORLD.floor.boss,2])}else if(w===0)add('ghiozzo',5,1.7);else{add('ghiozzo',3,1.3);add('aringa',6,.45)}return q}
   let pool=poolFor(depth);if(depth===0&&w===0)pool=['ghiozzo'];else if(depth===0&&w===1)pool=['ghiozzo','aringa'];
   const fresh=POOL[Math.min(depth,4)].filter(k=>pool.includes(k));
-  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi:depth;let n=Math.round((7+w*2.2+diff*2.3)*S.mods.count);if(boss)n=Math.round(n*.6);
+  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi*2:depth;let n=Math.round((7+w*2.2+diff*2.3)*S.mods.count);if(boss)n=Math.round(n*.6);
   for(let k=0;k<n;k++){let t=null;if(fresh.length&&depth>0&&rnd()<.35)t=pick(fresh);
     else{const tot=pool.reduce((a,p)=>a+RAR[ENEMIES[p].rar].w,0);let x=rnd()*tot;for(const p of pool){x-=RAR[ENEMIES[p].rar].w;if(x<=0){t=p;break}}}
     t=t||'ghiozzo';const e=ENEMIES[t];if(e.group)for(let g=0;g<e.group;g++)q.push([t,g<e.group-1?.28:.7]);else q.push([t,e.hp>=140?1.5:Math.max(.5,1.05-w*.03)])}
   if(boss)q.splice(Math.min(4,q.length),0,[WORLD.floor.boss,3]);return q}
-const bossMul=()=>(S.tutorial?.45:1)*(S.run==='short'||S.run==='duel'?(S.fi===0?.65:.85):1)*(S.run==='inf'?1+Math.floor(S.total/6)*.6:1);
+const bossMul=()=>(S.tutorial?.45:1)*(S.run==='short'||S.run==='duel'?(S.fi===0?.65:.85):1)*(S.run==='inf'?1+Math.floor(S.total/6)*.6:1)*(S.run==='long'&&S.fi>=3?1.25:1);
 function prepWave(){S.nextQ=genWave()}
 function startWave(){if(S.mode!=='build')return;if(S.tutorial&&!S.tutAllowStart){toast('Segui il Polpo Chef: prima assumi i dipendenti');return}S.queue=S.nextQ||genWave();S.nextQ=null;if(S.mgr==='polpo'||Math.random()<.5)toast(cpick(isBossWave()?BOSS_LINES:CHEF_LINES));const w=S.run==='inf'?S.total:S.wave;
-  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi:S.depth;S.hpMul=(1+.13*w)*(1+.3*diff)*(S.run==='inf'?1+Math.max(0,S.total-8)*.06:1);S.spawnT=.3;S.spawnAlt=0;S.mode='wave';
+  const diff=S.run==='short'||S.run==='duel'||S.run==='armydef'?S.fi*1.8:S.run==='long'?S.fi*2:S.depth;S.hpMul=(1+.13*w)*(1+.3*diff)*(S.run==='inf'?1+Math.max(0,S.total-8)*.06:1);S.spawnT=.3;S.spawnAlt=0;S.mode='wave';
   if(S.mods.drain){S.hp=Math.max(1,S.hp-S.mods.drain);text(180,455,'-'+S.mods.drain+' chef posseduto','#ff4f5e',1.4)}}
 function waveClear(){const boss=isBossWave();
   for(const t of S.towers)if(t.key==='ostrica'){if(t.robbed){t.robbed=0;text(t.x,t.y-24,'Derubata!','#ff4f5e',1.2)}else{const g=30+12*(t.lv-1);S.perle+=g;S.earned+=g;text(t.x,t.y-24,'+'+g,'#f1dca2',1.2);t.anim=1}}
@@ -69,13 +69,16 @@ function enterMonsterFloor(i){if(i>=S.floors.length){endRun(true);return}S.fi=i;
   S.baseMax=S.baseHp=20+i*10;S.hunger=Math.min(S.hungerMax,50);S.timer=150;S.lane=0;
   S.ai.budget=Math.round((130+i*110+fi*25)*S.ai.startCut);S.ai.income=3.2+i*1.8+fi*.6;S.ai.dmg=.75+i*.2+fi*.08;S.ai.t=4;
   aiThink(true);if(S.kitAtk&&typeof placeKit==='function')placeKit(S.kitAtk);S.mode='intro';musicMode=0;ui.floorIntro()}
-const monCost=k=>Math.round(ENEMIES[k].mcost*S.mm.cost);
+/* ritocchi di vita solo in Mostro affamato, per tenere ogni mostro alla pari col suo costo */
+const MON_TUNE={aringa:1.5,vipera:1.7,chirurgo:1.25,lumaca:1.15,stella:1.15,murena:1.2,martello:.85,rivale:.85,riccio:.9};
+const monCost=k=>Math.min(100,Math.round(ENEMIES[k].mcost*S.mm.cost));
 function playMon(i){const k=S.mhand[i];if(!k||S.mode!=='mplay')return;const c=monCost(k);if(S.hunger<c){sfx('nope');toast('Serve più fame: '+c);return}
-  S.hunger-=c;const d=ENEMIES[k],lvl=save.mon[k]||1,hpMul=2.2*S.mm.hp*(1+.12*(lvl-1))*(1+S.round*.18);
+  S.hunger-=c;const d=ENEMIES[k],lvl=save.mon[k]||1,hpMul=2.2*S.mm.hp*(1+.12*(lvl-1))*(1+S.round*.18)*(d.boss?d.mcost*16/(d.hp*2.2):1)*(MON_TUNE[k]||1);
   for(let g=0;g<(d.group||1);g++)spawnEnemy(k,{path:S.lane,pd:-g*14,hpMul,spMul:1.3,bite:S.mm.bite});sfx('spawn');S.mhand[i]=null;S.mpile.push(k);S.mhand[i]=drawMon()}
 function aiThink(force){const free=WORLD.slots.filter(s=>!s.tower),dk=WORLD.floor.dark,hasRana=S.towers.some(t=>t.key==='rana');
   if(free.length&&(force||!S.towers.length||rnd()<.62)){
-    let keys=TOWER_KEYS.filter(k=>TOWERS[k].cost<=S.ai.budget&&k!=='ostrica');if(!keys.length)return;
+    const nInt=S.towers.filter(t=>t.key==='polipetto').length;let keys=TOWER_KEYS.filter(k=>TOWERS[k].cost<=S.ai.budget&&k!=='ostrica'&&!(k==='polipetto'&&nInt>=2));
+    if(!force&&S.towers.length>=2&&keys.length&&Math.max(...keys.map(k=>TOWERS[k].cost))<70&&rnd()<.7)return;if(!keys.length)return;
     if(dk>=.3&&!hasRana&&keys.includes('rana'))keys=['rana'];else keys=keys.filter(k=>TOWERS[k].dmg>0).concat(keys);
     const k=pick(keys),slot=pick(free.slice(0,Math.max(3,Math.ceil(free.length*.7))));
     S.ai.budget-=TOWERS[k].cost;const t=makeTower(k,slot);t.spent=TOWERS[k].cost;fx({k:'ring',x:t.x,y:t.y,r:24,dur:.35,col:'#f1dca2'})}
@@ -166,7 +169,7 @@ function abilities(e,dt){switch(e.type){
 function updEnemy(e,dt){if(e.dead)return;e.hitT=Math.max(0,e.hitT-dt);
   let sp=e.speed*(S.kind==='def'?S.mods.enemySpeed:S.mm.speed);
   if(e.slow>0){e.slow-=dt;if(!e.d.noSlow)sp*=.5}if(e.dash>0){e.dash-=dt;sp*=3}if(e.rage)sp*=1.4;
-  if(e.stun>0){e.stun-=dt;sp=0}if(S.freezeT>0)sp=0;
+  if(e.tripCd>0)e.tripCd-=dt;if(e.stun>0){e.stun-=dt;sp=0}if(S.freezeT>0)sp=0;
   if(e.confCd>0)e.confCd-=dt;if(e.conf>0){e.conf-=dt;e.pd=Math.max(0,e.pd-sp*.4*dt)}else e.pd+=sp*dt;
   const p=e.path.at(e.pd);e.x=p.x;e.y=p.y;e.dirx=p.dx;e.diry=p.dy;if(p.dx>.1)e.face=1;else if(p.dx<-.1)e.face=-1;
   if(e.disg&&e.pd>e.path.len*.45){e.disg=false;text(e.x,e.y-16,'SORPRESA!','#ff4f5e',1);sfx('nope')}
@@ -206,11 +209,11 @@ function updTower(t,dt){t.anim=Math.max(0,t.anim-dt);t.atk=Math.max(0,(t.atk||0)
     case'hold':{const h=list.find(e=>!e.d.fly&&!e.d.boss);if(!h){t.cd=.4;return}h.stun=Math.max(h.stun,1.6);hurt(h,D,{src:t});t.anim=.5;text(h.x,h.y-h.r-10,'Assaggia!','#f1dca2',.7);sfx('bite');break}
     case'gulp':t.anim=.9;sfx('gulp');S.shake=.3;fx({k:'ring',x:t.x,y:t.y,r:R,dur:.6,col:'#9fd6e8'});text(t.x,t.y-34,'GLOM!','#9fd6e8',1);for(const e of list)hurt(e,e.d.boss?D*.3:D,{src:t,boom:1});break;
     case'random':{const r=rnd();
-      if(r<.45){S.shots.push({x:t.x,y:t.y-14,tg,dmg:6+rnd()*26,src:t,a:0});sfx('throw')}
-      else if(r<.6){tg.stun=Math.max(tg.stun,tg.d.boss?.3:1.2);text(tg.x,tg.y-tg.r-10,'Inciampa!','#f1dca2',.8)}
+      if(r<.45){S.shots.push({x:t.x,y:t.y-14,tg,dmg:D*(.5+rnd()),src:t,a:0});sfx('throw')}
+      else if(r<.6&&!(tg.tripCd>0)){tg.stun=Math.max(tg.stun,tg.d.boss?.3:.9);tg.tripCd=3;text(tg.x,tg.y-tg.r-10,'Inciampa!','#f1dca2',.8)}else if(r<.6){S.shots.push({x:t.x,y:t.y-14,tg,dmg:D*(.4+rnd()*.8),src:t,a:0});sfx('throw')}
       else if(r<.74){if(S.kind==='def'){S.perle+=4;S.earned+=4}text(t.x,t.y-24,'Mancia +4','#f1dca2',.8)}
       else if(r<.84){tg.hp=Math.min(tg.max,tg.hp+10);text(t.x,t.y-24,'Ops!','#ff4f5e',.8)}
-      else{hurt(tg,60,{src:t});text(t.x,t.y-24,'GENIO!','#e8c14a',.9);sfx('pop')}break}}}
+      else{hurt(tg,D*3.5,{src:t});text(t.x,t.y-24,'GENIO!','#e8c14a',.9);sfx('pop')}break}}}
 function beam(t,tg,R,D){const dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,len=R*1.15;
   for(const e of S.enemies){if(e.dead)continue;const px=e.x-t.x,py=e.y-t.y,along=px*ux+py*uy;if(along<0||along>len)continue;if(Math.abs(px*uy-py*ux)<12+e.r*.5&&canSee(t,e,false))hurt(e,D,{src:t})}
   fx({k:'beam',x:t.x,y:t.y-6,x2:t.x+ux*len,y2:t.y-6+uy*len,dur:.18})}
@@ -229,7 +232,7 @@ function update(dt){
   if(S.mode==='wave'){S.spawnT-=dt;while(S.spawnT<=0&&S.queue.length){const[ty,g]=S.queue.shift();spawnEnemy(ty,{hpMul:ENEMIES[ty].boss?bossMul():S.hpMul});S.spawnT+=g}}
   if(S.mode==='mplay'){updMonster(dt);if(S.mode!=='mplay')return}
   for(const e of S.enemies)updEnemy(e,dt);
-  for(const c of S.clouds){c.t-=dt;for(const e of S.enemies)if(!e.dead&&Math.hypot(e.x-c.x,e.y-c.y)<c.r){if(!e.d.boss&&!e.seen.has(c.id)&&!(e.confCd>0)){e.seen.add(c.id);e.conf=.8;e.confCd=3}hurt(e,4*dt)}}
+  for(const c of S.clouds){c.t-=dt;for(const e of S.enemies)if(!e.dead&&Math.hypot(e.x-c.x,e.y-c.y)<c.r){if(!e.d.boss&&!e.seen.has(c.id)&&!(e.confCd>0)){e.seen.add(c.id);e.conf=1;e.confCd=3}hurt(e,8*dt)}}
   S.clouds=S.clouds.filter(c=>c.t>0);S.enemies=S.enemies.filter(e=>!e.dead);
   for(const t of S.towers)updTower(t,dt);updShots(dt);
   if(S.kind==='def'&&S.mgr==='nonno'&&S.mode==='wave'){S.torpT-=dt;if(S.torpT<=0){S.torpT=6;const tg=S.enemies.filter(e=>!e.disg).sort((a,b)=>prog(b)-prog(a))[0];if(tg){S.shots.push({x:292,y:476,tg,dmg:80*(1+.3*S.depth),torp:1,a:0});sfx('shot')}}}
