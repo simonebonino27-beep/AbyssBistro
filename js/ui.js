@@ -59,11 +59,13 @@ function renderShop(){const mon=S.kind==='mon';const hand=mon?S.mhand:S.hand;con
     const d=mon?ENEMIES[k]:TOWERS[k];b.innerHTML='<span class="rar" style="background:var('+RAR[d.rar].c+')"></span><img alt="" src="'+(mon?ICONS.e[k]:ICONS.t[k])+'"><span class="ntx"><span class="nm">'+(mon?d.name.split(' ')[0]+(d.group?' x3':''):d.name)+'</span><span class="cs"></span></span>';
     b.onclick=()=>{if(mon){const ok=S.hunger>=monCost(k);playMon(i);if(ok&&S.enemies.some(e=>e.type===k))toast(d.name+': '+d.info);return}if(S.tutorial&&S.tutOnly&&S.tutOnly!==k){sfx('nope');toast(S.tutOnly==='-'?'Segui il Polpo Chef':'Il Polpo Chef dice: prima '+TOWERS[S.tutOnly].name);return}sfx('click');closePanel();S.tool=S.tool===k?null:k};shop.appendChild(b)})}
 const cache={};function setT(id,v){if(cache[id]!==v){cache[id]=v;$(id).textContent=v}}
+/* cambia mano: ogni volta costa di più (perle in difesa, fame da mostro), si azzera a ogni piano o round */
+const handCostP=()=>15+10*(S.handRolls||0),handCostM=()=>Math.min(4,1+(S.handRolls||0));
 function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderShop();
   if(mon){setT('hpLbl',String(Math.max(0,Math.ceil(S.baseHp))));$('perlePill').hidden=true;const m=Math.max(0,Math.ceil(S.timer));setT('waveLbl','Round '+(S.fi+1)+'/3 · '+Math.floor(m/60)+':'+String(m%60).padStart(2,'0'));
     $('hungerWrap').hidden=false;$('hungerFill').style.width=(S.hunger/S.hungerMax*100)+'%';setT('hungerLbl',Math.floor(S.hunger)+'/'+S.hungerMax+' fame');
     for(const b of shop.children){const k=S.mhand[b.dataset.i];if(!k)continue;const c=monCost(k);b.classList.toggle('poor',S.hunger<c);const cs=b.querySelector('.cs');const h='<span class="fang"></span>'+c;if(cs.dataset.h!==h){cs.dataset.h=h;cs.innerHTML=h}}
-    $('abilityBtn').hidden=true;$('handBtn').hidden=S.mode!=='mplay';$('handBtn').classList.toggle('poor',S.hunger<1);setT('handCost','1 fame');$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
+    $('abilityBtn').hidden=true;$('handBtn').hidden=S.mode!=='mplay';$('handBtn').classList.toggle('poor',S.hunger<handCostM());setT('handCost',handCostM()+' fame');$('wasabiBtn').hidden=true;$('freezeBtn').hidden=true;$('startBtn').hidden=true;
     $('laneBtn').hidden=WORLD.paths.length<2;setT('laneLbl',S.lane?'Corsia destra':'Corsia sinistra')}
   else{setT('hpLbl',String(S.hp));$('perlePill').hidden=false;setT('perleLbl',String(S.perle));$('hungerWrap').hidden=true;$('laneBtn').hidden=true;
     const boss=isBossWave();setT('waveLbl',S.run==='inf'?'Ondata '+(S.total+1)+(boss?' · Boss':''):'Piano '+(S.fi+1)+' · '+(boss?'Boss':(S.wave+1)+'/'+wavesPer()));
@@ -72,7 +74,7 @@ function syncUI(){if(!S||S.mode==='menu')return;const mon=S.kind==='mon';renderS
     if(ab.dataset.m!==S.mgr){ab.dataset.m=S.mgr;$('abilityIco').src=S.mgr==='polpo'?ICONS.plate:ICONS.m[S.mgr]}
     setT('abilityLbl',S.mgr==='polpo'?String(S.traps):mgrShort[S.mgr]);
     $('wasabiBtn').hidden=S.wasabi<=0;setT('wasabiCnt',String(S.wasabi));$('freezeBtn').hidden=S.freeze<=0;setT('freezeCnt',String(S.freeze));
-    $('startBtn').hidden=S.mode!=='build';$('shop').hidden=!!S.kitBuild;$('abilityBtn').hidden=!!S.kitBuild;$('handBtn').hidden=S.mode!=='build'||!!S.kitBuild;$('handBtn').classList.toggle('poor',S.perle<15);setT('handCost','15 perle');setT('startBtn',S.kitBuild?'Crea il codice della cucina':boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
+    $('startBtn').hidden=S.mode!=='build';$('shop').hidden=!!S.kitBuild;$('abilityBtn').hidden=!!S.kitBuild;$('handBtn').hidden=S.mode!=='build'||!!S.kitBuild;$('handBtn').classList.toggle('poor',S.perle<handCostP());setT('handCost',handCostP()+' perle');setT('startBtn',S.kitBuild?'Crea il codice della cucina':boss?'Arriva il boss':'Inizia ondata '+(S.run==='inf'?S.total+1:S.wave+1))}
   syncToolInfo();syncPreview();setT('speedBtn','x'+S.speed)}
 function statLine(k){const d=TOWERS[k],meta=1+.1*((save.emp[k]||1)-1),dm=d.dmg*(S&&S.kind==='def'?S.mods.dmg[k]*S.mods.all:1)*meta,rg=Math.round(d.range*(S&&S.kind==='def'?S.mods.range:1));
   if(d.spell)return d.spell==='rush'?'Tutti i dipendenti +60% velocità per 7s':'Raggio '+d.range+(d.dmg?' · '+Math.round(d.dmg*meta)+' danni':'');
@@ -100,9 +102,9 @@ $('wasabiBtn').onclick=()=>{if(S.mode!=='wave'||S.wasabi<=0){toast('Usala quando
 $('freezeBtn').onclick=()=>{if(S.mode!=='wave'||S.freeze<=0){toast('Usalo quando arrivano i nemici');return}S.freeze--;S.freezeT=4;sfx('zap');fx({k:'flash',dur:.5,col:'#bfe9ff'});toast('Cervelli congelati per 4 secondi')};
 $('laneBtn').onclick=()=>{S.lane=S.lane?0:1;sfx('click')};
 $('handBtn').onclick=()=>{if(!S)return;
-  if(S.kind==='mon'){if(S.mode!=='mplay')return;if(S.hunger<1){sfx('nope');toast('Serve 1 fame');return}S.hunger-=1;const old=S.mhand.slice();for(let i=0;i<HAND_N;i++)S.mhand[i]=null;for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();S.mpile.push(...old.filter(Boolean));sfx('card');return}
-  if(S.mode!=='build'){sfx('nope');toast('La mano si cambia tra un\'ondata e l\'altra');return}if(S.tutorial&&S.tutOnly){sfx('nope');toast('Segui il Polpo Chef');return}if(S.perle<15){sfx('nope');toast('Servono 15 perle');return}
-  S.perle-=15;S.tool=null;closePanel();const old=S.hand.slice();for(let i=0;i<HAND_N;i++)S.hand[i]=null;for(let i=0;i<HAND_N;i++)S.hand[i]=drawCard();S.pile.push(...old.filter(Boolean));sfx('card');toast('Mano nuova dal mazzo')};
+  if(S.kind==='mon'){if(S.mode!=='mplay')return;{const c=handCostM();if(S.hunger<c){sfx('nope');toast('Servono '+c+' di fame');return}S.hunger-=c;S.handRolls=(S.handRolls||0)+1}const old=S.mhand.slice();for(let i=0;i<HAND_N;i++)S.mhand[i]=null;for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();S.mpile.push(...old.filter(Boolean));sfx('card');return}
+  if(S.mode!=='build'){sfx('nope');toast('La mano si cambia tra un\'ondata e l\'altra');return}if(S.tutorial&&S.tutOnly){sfx('nope');toast('Segui il Polpo Chef');return}{const c=handCostP();if(S.perle<c){sfx('nope');toast('Servono '+c+' perle');return}S.perle-=c;S.handRolls=(S.handRolls||0)+1}
+  S.tool=null;closePanel();const old=S.hand.slice();for(let i=0;i<HAND_N;i++)S.hand[i]=null;for(let i=0;i<HAND_N;i++)S.hand[i]=drawCard();S.pile.push(...old.filter(Boolean));sfx('card');toast('Mano nuova dal mazzo · la prossima costa '+handCostP()+' perle')};
 $('speedBtn').onclick=()=>{if(!S)return;sfx('click');S.speed=S.speed===1?2:1};
 $('startBtn').onclick=()=>{sfx('click');closePanel();if(S.kitBuild){exportKit();return}startWave()};
 

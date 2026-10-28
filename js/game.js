@@ -31,7 +31,7 @@ function startDefense(run,mgr,deck,daily){S=newRun('def',run,{mgr,deck});if(dail
   if(run==='short'){S.floors=[pick([0,0,1]),pick([2,3,4]),5]}else if(run==='long')S.floors=[0,1,2,3,4,5];else S.floors=[0];
   S.pile=shuffle(S.deck.slice());for(let i=0;i<HAND_N;i++)S.hand[i]=drawCard();enterFloor(0)}
 function enterFloor(i){S.fi=i;const fi=curFloorIdx();S.depth=S.run==='inf'?Math.min(5,Math.floor(S.total/5)):fi;loadFloor(fi);
-  for(const s of WORLD.slots)s.tower=null;S.towers=[];S.enemies=[];S.shots=[];S.plates=[];S.clouds=[];S.mines=[];S.nets=[];S.rushT=0;S.tsuT=22;S.traps=S.mgr==='polpo'?8:0;
+  for(const s of WORLD.slots)s.tower=null;S.towers=[];S.enemies=[];S.shots=[];S.plates=[];S.clouds=[];S.mines=[];S.nets=[];S.rushT=0;S.tsuT=22;S.handRolls=0;S.traps=S.mgr==='polpo'?8:0;
   S.wave=0;S.floorHit=false;S.boss=null;S.blackout=0;S.mode='intro';musicMode=0;ui.floorIntro()}
 function genWave(){const boss=isBossWave(),depth=S.depth,w=S.run==='inf'?S.total:S.wave,q=[];
   if(S.army)return armyWave(w);
@@ -70,7 +70,7 @@ function drawMon(){return drawFrom(S.mpile,S.mdeck,S.mhand)}
 function startMonster(mdeck){S=newRun('mon','monster',{mdeck});S.floors=shuffle([0,1,2,3,4,5]).slice(0,3);S.mpile=shuffle(S.mdeck.slice());for(let i=0;i<HAND_N;i++)S.mhand[i]=drawMon();enterMonsterFloor(0)}
 function enterMonsterFloor(i){if(i>=S.floors.length){endRun(true);return}S.fi=i;S.round=i;const fi=S.floors[i];S.depth=fi;loadFloor(fi);
   for(const s of WORLD.slots)s.tower=null;S.towers=[];S.enemies=[];S.shots=[];S.clouds=[];S.plates=[];S.boss=null;S.blackout=0;
-  S.baseMax=S.baseHp=20+i*10;S.hunger=Math.min(S.hungerMax,5);S.timer=150;S.lane=0;
+  S.baseMax=S.baseHp=20+i*10;S.handRolls=0;S.hunger=Math.min(S.hungerMax,5);S.timer=150;S.lane=0;
   S.ai.budget=Math.round((130+i*110+fi*25)*S.ai.startCut);S.ai.income=3.2+i*1.8+fi*.6;S.ai.dmg=.75+i*.2+fi*.08;S.ai.t=4;
   aiThink(true);if(S.kitAtk&&typeof placeKit==='function')placeKit(S.kitAtk);S.mode='intro';musicMode=0;ui.floorIntro()}
 /* ritocchi di vita solo in Mostro affamato, per tenere ogni mostro alla pari col suo costo */

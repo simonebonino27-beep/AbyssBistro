@@ -30,7 +30,7 @@ const TUT=[
   /* --- prima del boss: trappole, rimescolo, boss --- */
   {text:'Il mio asso nella manica: i piatti trappola. Tocca il pulsante col piatto, poi tocca un punto del sentiero.',pos:'mid',hi:'#abilityBtn',wait:()=>S.plates.length>=1},
   {text:'Chi ci passa sopra si ferma a mangiare e prende 45 danni. Ne hai 8 per piano, usali nei punti caldi.',btn:'Avanti',pos:'mid'},
-  {text:'Se la mano non ti piace, questo tasto la cambia per 15 perle. Ricordatelo per dopo.',btn:'Avanti',pos:'mid',hi:'#handBtn'},
+  {text:'Se la mano non ti piace, questo tasto la cambia: la prima volta costa 15 perle, poi ogni volta 10 in più (si azzera a ogni piano).',btn:'Avanti',pos:'mid',hi:'#handBtn'},
   {text:'Guarda l\'anteprima: arriva il boss del piano, il Re Aragosta. Ogni tanto "boccia" un dipendente e lo blocca per qualche secondo. Ti lascio 80 perle: assumi chi vuoi dalla mano e poi premi Inizia.',pos:'mid',free:1,enter:()=>{S.perle+=80},hi:'#startBtn',start:1,wait:()=>S.mode==='wave'},
   {text:'Visto lo zzz? Quel dipendente è stato bocciato. Si riprende da solo dopo qualche secondo. Tieni duro!',pos:'top',free:1,trigger:()=>S.towers.some(t=>t.disabled>0)&&!!S.boss,auto:6,wait:()=>S.mode!=='wave'},
   {text:'BOSS BATTUTO! Hai vinto stelle Michelin e un pacchetto di carte: lo apri dal menu, in Le mie carte. Scegli la carta e scendiamo.',pos:'top',z:1,free:1,wait:()=>$('cards').hidden&&S.mode!=='cards'},
